@@ -366,3 +366,32 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     font-size: 10px;
   }
 }
+
+
+@media (max-width: 380px) {
+  .mr-header-title {
+    max-width: 72px;
+  }
+
+  .mr-header-search input {
+    font-size: 10px;
+  }
+
+  .mr-signout {
+    display: none;
+  }
+}
+
+@media (max-width: 320px) {
+  .mr-header-title {
+    max-width: 64px;
+  }
+
+  .mr-header-search input {
+    padding-left: 30px;
+  }
+
+  .mr-header-search input::placeholder {
+    font-size: 9px;
+  }
+}
