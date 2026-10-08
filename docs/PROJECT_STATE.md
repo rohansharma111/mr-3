@@ -98,6 +98,14 @@ Important source-derived demo values:
 - Top specialty is calculated from active doctors; top molecule is calculated from issued sample activity for the authenticated user.
 - No schema change was required for this milestone.
 
+## Writing-pattern analytics milestone
+
+- Added persistent `writing_pattern_snapshots` data for the two writing-pattern periods explicitly present in the supplied HTML prototype.
+- Added authenticated `GET /api/analytics/writing-pattern` and switched the Explorer writing-pattern panel to load from Neon.
+- Preserved the prototype category/molecule percentages and insights exactly as source data.
+- The API explicitly returns `doctorSpecific: false`: the supplied prototype does not provide enough underlying event data to claim these percentages are individual-doctor prescribing analytics.
+- Seed data upserts the same source snapshots for repeatable development setup.
+
 ## Immediate next steps
 1. Run a full local/Vercel build validation against the current development branch; the connected environment cannot currently execute a networked npm install/build. The login page now wraps its `useSearchParams()` consumer in `Suspense`, matching the Next.js App Router guidance.
 2. Verify the seed path after the Prisma field-to-column mapping alignment.
