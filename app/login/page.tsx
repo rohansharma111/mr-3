@@ -48,7 +48,7 @@ function LoginForm() {
 
   return (
     <main className="min-h-screen bg-slate-950 flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-white p-8 shadow-2xl">
+      <div className="absolute inset-0 pointer-events-none opacity-40" aria-hidden="true"><div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-blue-600/20 blur-3xl" /><div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" /></div>\n      <div className="relative w-full max-w-md rounded-3xl border border-slate-800 bg-white p-6 sm:p-8 shadow-2xl">
         <div className="mb-8">
           <div className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-600">
             MR 3.0
