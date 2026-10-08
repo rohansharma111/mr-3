@@ -11,3 +11,38 @@ body {
 button, input, select, textarea { font: inherit; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+
+/* MR 3.0 application shell */
+* { box-sizing: border-box; }
+button, input, select, textarea { transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease, color .15s ease, opacity .15s ease, transform .15s ease; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .18);
+  outline-offset: 2px;
+}
+.mr-sidebar {
+  position: relative;
+  z-index: 50;
+  box-shadow: 10px 0 30px rgba(15, 23, 42, .08);
+}
+.mr-topbar {
+  min-height: 68px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .02);
+}
+.mr-section-heading { max-width: 330px; }
+.mr-menu-button { display: none; }
+@media (max-width: 767px) {
+  .mr-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(84vw, 320px);
+    transform: translateX(-105%);
+    transition: transform .2s ease;
+    box-shadow: 18px 0 40px rgba(15, 23, 42, .22);
+  }
+  .mr-sidebar.mr-sidebar-open { transform: translateX(0); }
+  .mr-menu-button { display: inline-flex; align-items: center; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
