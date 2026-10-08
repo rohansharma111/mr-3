@@ -220,6 +220,7 @@ export default function Home() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const [aiInput, setAiInput] = useState("");
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -537,6 +538,28 @@ export default function Home() {
     if (section === "notifications") loadNotifications();
   }, [section]);
 
+  useEffect(() => {
+    if (!notificationOpen) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".mr-notification-wrap")) {
+        setNotificationOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setNotificationOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [notificationOpen]);
+
   const markNotificationRead = async (notification: NotificationItem) => {
     const response = await fetch("/api/notifications", {
       method: "PATCH",
@@ -761,12 +784,75 @@ export default function Home() {
             </div>
 
             <div className="mr-header-actions">
-              <button type="button" onClick={() => navigate("notifications")}
-                className="mr-header-notifications h-10 w-10 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-blue-600 relative text-lg"
-                aria-label="Notifications">
-                ◉
-                {unreadNotifications > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}
-              </button>
+              <div className="mr-notification-wrap relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNotificationOpen((open) => !open);
+                    if (!notificationOpen) loadNotifications();
+                  }}
+                  className={"mr-header-notifications h-10 w-10 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-blue-600 relative" + (notificationOpen ? " bg-slate-50 border-slate-200 text-blue-600" : "")}
+                  aria-label="Notifications"
+                  aria-expanded={notificationOpen}
+                  aria-haspopup="dialog"
+                >
+                  <span className="mr-bell-icon" aria-hidden="true">♢</span>
+                  {unreadNotifications > 0 && (
+                    <span className="mr-notification-badge">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>
+                  )}
+                </button>
+
+                {notificationOpen && (
+                  <div className="mr-notification-popover" role="dialog" aria-label="Notifications">
+                    <div className="mr-notification-popover-head">
+                      <div>
+                        <div className="font-black text-slate-900">Notifications</div>
+                        <div className="text-[11px] text-slate-500">
+                          {unreadNotifications > 0 ? unreadNotifications + " unread" : "You're all caught up"}
+                        </div>
+                      </div>
+                      {unreadNotifications > 0 && (
+                        <button type="button" onClick={markAllNotificationsRead} className="text-[11px] font-bold text-blue-700 hover:text-blue-800">
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="mr-notification-list">
+                      {notificationsLoading ? (
+                        <div className="p-6 text-center text-xs text-slate-500">Loading…</div>
+                      ) : notifications.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-slate-500">No notifications yet.</div>
+                      ) : (
+                        notifications.slice(0, 6).map((notification) => (
+                          <button
+                            type="button"
+                            key={notification.id}
+                            onClick={async () => {
+                              await markNotificationRead(notification);
+                              setNotificationOpen(false);
+                              if (notification.actionUrl?.includes("section=")) {
+                                const nextSection = new URLSearchParams(notification.actionUrl.split("?")[1]).get("section");
+                                if (nextSection) navigate(nextSection);
+                              }
+                            }}
+                            className={"mr-notification-item" + (notification.isRead ? "" : " is-unread")}
+                          >
+                            <span className="mr-notification-dot" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-xs font-bold text-slate-900 truncate">{notification.title}</span>
+                              <span className="block text-[11px] leading-4 text-slate-500 line-clamp-2">{notification.message}</span>
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+
+                    <button type="button" onClick={() => { setNotificationOpen(false); navigate("notifications"); }} className="mr-notification-view-all">
+                      View all notifications
+                    </button>
+                  </div>
+                )}
               <div className="mr-header-divider" />
               <UserMenu />
             </div>
