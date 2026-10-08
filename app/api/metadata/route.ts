@@ -10,7 +10,6 @@ export async function GET() {
 
   const [patches, specialties] = await Promise.all([
     prisma.patch.findMany({
-      where: { isActive: true },
       select: {
         id: true,
         name: true,
@@ -22,7 +21,6 @@ export async function GET() {
       orderBy: { name: "asc" }
     }),
     prisma.specialty.findMany({
-      where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: "asc" }
     })
