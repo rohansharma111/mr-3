@@ -4,6 +4,8 @@ import { getAuthenticatedUser } from "@/lib/auth-user";
 import { z } from "zod";
 
 const doctorQuerySchema = z.object({
+  state: z.string().trim().min(1).max(100).default("Maharashtra"),
+  region: z.string().trim().min(1).max(100).default("Andheri Region"),
   patch: z.string().trim().min(1).max(100).default("Veera Desai"),
   specialty: z.string().trim().min(1).max(100).default("All"),
   q: z.string().trim().max(200).default(""),
@@ -16,6 +18,8 @@ export async function GET(request: NextRequest) {
 
   const searchParams = new URL(request.url).searchParams;
   const parsed = doctorQuerySchema.safeParse({
+    state: searchParams.get("state") ?? undefined,
+    region: searchParams.get("region") ?? undefined,
     patch: searchParams.get("patch") ?? undefined,
     specialty: searchParams.get("specialty") ?? undefined,
     q: searchParams.get("q") ?? undefined,
@@ -26,13 +30,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid doctor filters", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { patch, specialty, q, sort } = parsed.data;
+  const { state, region, patch, specialty, q, sort } = parsed.data;
 
   try {
   const doctors = await prisma.doctor.findMany({
     where: {
       isActive: true,
-      patches: { some: { patch: { name: patch } } },
+      patches: {
+        some: {
+          patch: {
+            name: patch,
+            state,
+            region
+          }
+        }
+      },
       ...(specialty !== "All" ? { specialty: { name: specialty } } : {}),
       ...(q ? {
         OR: [
