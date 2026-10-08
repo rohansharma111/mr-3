@@ -1,4 +1,5 @@
-import { PrismaClient, Potential, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -8,16 +9,16 @@ const patchData = [
 ] as const;
 
 const doctorData = [
-  ["Dr. Ankit Rawal","Cardiologist","HealthCare Clinic","Veera Desai Rd",92,Potential.HIGH,0.6,"Veera Desai"],
-  ["Dr. Ramesh Gupta","Cardiologist","City Heart Hospital","Veera Desai Rd",88,Potential.HIGH,1.2,"Veera Desai"],
-  ["Dr. Neha Verma","Cardiologist","Lotus Hospital","Azad Nagar",75,Potential.MEDIUM,1.8,"Veera Desai"],
-  ["Dr. Amit Shah","Cardiologist","Life Line Hospital","Veera Desai Rd",73,Potential.MEDIUM,2.1,"Veera Desai"],
-  ["Dr. Pooja Mehta","Cardiologist","Sunrise Hospital","Andheri (W)",70,Potential.MEDIUM,2.4,"Veera Desai"],
-  ["Dr. Suresh Patil","Diabetologist","Care Clinic","Veera Desai Rd",84,Potential.HIGH,0.9,"Veera Desai"],
-  ["Dr. Kirit Desai","Cardiologist","Parle Heart Care","MG Road",95,Potential.HIGH,2.8,"Vile Parle"],
-  ["Dr. Sneha Kulkarni","Gynecologist","Motherhood Hub","Station Rd",81,Potential.HIGH,3.1,"Vile Parle"],
-  ["Dr. Kabir Malik","Orthopedic","Joint & Spine Clinic","Yari Road",89,Potential.HIGH,1.5,"Versova"],
-  ["Dr. Tanya Sen","General Physician","Versova Medical","Beach Rd",68,Potential.MEDIUM,2.2,"Versova"]
+  ["Dr. Ankit Rawal","Cardiologist","HealthCare Clinic","Veera Desai Rd",92,"HIGH",0.6,"Veera Desai"],
+  ["Dr. Ramesh Gupta","Cardiologist","City Heart Hospital","Veera Desai Rd",88,"HIGH",1.2,"Veera Desai"],
+  ["Dr. Neha Verma","Cardiologist","Lotus Hospital","Azad Nagar",75,"MEDIUM",1.8,"Veera Desai"],
+  ["Dr. Amit Shah","Cardiologist","Life Line Hospital","Veera Desai Rd",73,"MEDIUM",2.1,"Veera Desai"],
+  ["Dr. Pooja Mehta","Cardiologist","Sunrise Hospital","Andheri (W)",70,"MEDIUM",2.4,"Veera Desai"],
+  ["Dr. Suresh Patil","Diabetologist","Care Clinic","Veera Desai Rd",84,"HIGH",0.9,"Veera Desai"],
+  ["Dr. Kirit Desai","Cardiologist","Parle Heart Care","MG Road",95,"HIGH",2.8,"Vile Parle"],
+  ["Dr. Sneha Kulkarni","Gynecologist","Motherhood Hub","Station Rd",81,"HIGH",3.1,"Vile Parle"],
+  ["Dr. Kabir Malik","Orthopedic","Joint & Spine Clinic","Yari Road",89,"HIGH",1.5,"Versova"],
+  ["Dr. Tanya Sen","General Physician","Versova Medical","Beach Rd",68,"MEDIUM",2.2,"Versova"]
 ] as const;
 
 async function main() {
@@ -31,8 +32,8 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "amit.rawat@mr3.demo" },
-    update: { name: "Amit Rawat", role: Role.FIELD_MANAGER },
-    create: { name: "Amit Rawat", email: "amit.rawat@mr3.demo", role: Role.FIELD_MANAGER }
+    update: { name: "Amit Rawat", role: "FIELD_MANAGER" },
+    create: { name: "Amit Rawat", email: "amit.rawat@mr3.demo", role: "FIELD_MANAGER" }
   });
 
   for (const [name, spec, clinic, location, score, potential, distanceKm, patchName] of doctorData) {
