@@ -18,22 +18,30 @@ function LoginForm() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      redirectTo: callbackUrl
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false,
+        redirectTo: callbackUrl
+      });
 
-    setLoading(false);
+      if (!result?.ok) {
+        setError(
+          result?.error === "CredentialsSignin"
+            ? "Invalid credentials. Please check your email and password."
+            : "Unable to sign in right now. Please try again."
+        );
+        return;
+      }
 
-    if (!result?.ok) {
-      setError("Invalid credentials. Please check your email and password.");
-      return;
+      router.replace(result.url || callbackUrl);
+      router.refresh();
+    } catch {
+      setError("Unable to sign in right now. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.replace(result.url || callbackUrl);
-    router.refresh();
   }
 
   return (
