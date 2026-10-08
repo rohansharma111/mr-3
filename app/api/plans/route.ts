@@ -133,7 +133,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const plan = await prisma.$transaction(async (tx) => {
+  let plan;
+
+  try {
+    plan = await prisma.$transaction(async (tx) => {
     const created = await tx.plan.create({
       data: {
         userId: user.id,
@@ -170,7 +173,14 @@ export async function POST(request: NextRequest) {
     });
 
     return created;
-  });
+    });
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined;
+    if (code === "P2002") {
+      return NextResponse.json({ error: "This doctor is already planned for that exact time" }, { status: 409 });
+    }
+    return NextResponse.json({ error: "Unable to create plan" }, { status: 500 });
+  }
 
   return NextResponse.json(
     {
