@@ -17,8 +17,8 @@ The supplied file ai_studio_code (1).html is the visual/product reference. It is
 - Repo: rohansharma111/mr-3
 - Default branch: main
 - develop branch exists.
-- Initial foundation files are committed.
-- Latest application page contains the first React conversion of Explorer, Potential, AI Support and Stockist sections.
+- Foundation, database schema, doctor API, seed and first database-backed UI are committed on main.
+- The current UI is a first production-oriented React conversion and is being expanded incrementally.
 
 ### Neon
 - Project: MR 3.0
@@ -27,6 +27,7 @@ The supplied file ai_studio_code (1).html is the visual/product reference. It is
 - production branch: br-purple-art-b42e2kzf
 - development branch: br-wandering-pond-b4wjpdlk
 - Development schema and initial demo records have been created.
+- Verified development counts: 10 doctors, 7 patches, 7 products, 4 stockists, 3 calls, 1 sample issue, 1 audit log.
 - Do not use production for development experiments.
 
 ## Database
@@ -51,24 +52,35 @@ Important source-derived demo values:
 - Versova: Dr. Kabir Malik (89 High), Dr. Tanya Sen (68 Medium).
 - Stockists: Shree Sai Medicals 480 strips Good; HealthCare Distributors 320 Good; Andheri Medico 110 Average; Lokhandwala Pharma 25 Low.
 - Prototype bottom metrics: Total Doctors 1,243; High Potential 312 (25.1%); Total Calls 156; Samples 320; Conversion Rate 18.2%; Top Specialty Cardiologists (42%); Top Molecule Aceclofenac + Paracetamol.
+- Writing-pattern categories/molecules are source data in the prototype and are represented in the current UI; they should be moved into persistent analytics data in a later pass.
 
 ## Current code
-- src/app/page.tsx is a client-side first-pass conversion. It still has some demo values hardcoded.
-- src/app/api/doctors/route.ts now provides a database-backed doctor query endpoint.
+- src/app/page.tsx is the main client UI. It now calls the database-backed doctor API instead of keeping the doctor list as the Explorer data source.
+- src/app/api/doctors/route.ts provides filtered/sorted doctor queries by patch, specialty and search query.
 - prisma/schema.prisma defines the main domain models.
-- The development branch has the initial database schema and source-derived demo records.
+- prisma/seed.ts provides a repeatable seed foundation for patches, specialties, user and doctors.
+- docs/PROJECT_STATE.md is the continuation handoff.
+
+## Current UI status
+- Sidebar/navigation follows the prototype structure.
+- Doctor Explorer now has hierarchy filters, patch sidebar, database-backed table, sort, map visualization and writing-pattern panel.
+- Doctor Potential has the prototype-style deep-profile shell.
+- AI Support has the prototype-style chat/recommendation shell; it is still a UI placeholder and must not be represented as a real AI service yet.
+- Stockist Data has the prototype-style summary and stock table.
+- My Plan, My Calls, Samples, Targets, Reports and Notifications currently show module placeholders and are next to be made functional.
+- Some prototype KPI and profile values remain hardcoded because their underlying domain/analytics models have not yet been fully implemented.
 
 ## Immediate next steps
-1. Verify TypeScript/Prisma schema and seed correctness.
-2. Make Doctor Explorer call the database-backed API rather than local doctor arrays.
-3. Move patches and specialties into API/database-driven filters.
-4. Rebuild the exact prototype Explorer layout, including the patch sidebar, filters, table, map pins, writing pattern panel and stockist bridge.
-5. Implement doctor profile tabs and call-log modal as real persisted workflows.
-6. Implement My Plan, My Calls, Samples, Targets, Reports and Notifications modules.
-7. Add authentication and RBAC before production deployment.
-8. Add AI Support server route; never expose provider API keys to browser.
-9. Add validation, audit events, rate limiting, error handling and tests.
-10. Configure deployment and separate production/development environment variables.
+1. Verify the Prisma schema against the existing Neon SQL schema and verify the seed path.
+2. Add API/database-driven patch and specialty metadata instead of hardcoded filter arrays.
+3. Complete the Explorer data model: coordinates, writing-pattern analytics and source-backed map positions.
+4. Implement doctor profile tabs and the Log Call modal as persisted transactions with audit events.
+5. Implement My Plan, My Calls, Samples, Targets, Reports and Notifications.
+6. Add authentication and RBAC before production workflows are exposed.
+7. Add server-side AI Support with validated input, authorization, rate limiting and secret isolation.
+8. Add robust validation, error handling, audit logging, indexes, tests and observability.
+9. Configure development/staging/production environment variables and deployment.
+10. Only after these are stable, introduce real company/user data import workflows.
 
 ## Source rule
 When implementing prototype behavior, use the supplied HTML as the source of truth for labels, demo values and terminology. Do not silently invent replacement business data.
