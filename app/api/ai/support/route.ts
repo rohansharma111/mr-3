@@ -52,9 +52,10 @@ function extractOutputText(payload: unknown) {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = getRequestId(request);
   const user = await getAuthenticatedUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized", requestId }, { status: 401 });
   }
 
   const parsed = requestSchema.safeParse(
@@ -74,8 +75,8 @@ export async function POST(request: NextRequest) {
     rateLimit = await consumeAiRateLimit(user.id);
   } catch {
     return NextResponse.json(
-      { error: "AI Support is temporarily unavailable." },
-      { status: 503 }
+      { error: "AI Support is temporarily unavailable.", requestId },
+      { status: 503, headers: requestIdHeaders(requestId) }
     );
   }
 
@@ -138,8 +139,8 @@ export async function POST(request: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: "AI provider request failed or timed out." },
-      { status: 502 }
+      { error: "AI provider request failed or timed out.", requestId },
+      { status: 502, headers: requestIdHeaders(requestId) }
     );
   }
 
@@ -168,7 +169,8 @@ export async function POST(request: NextRequest) {
         entityType: "AI_SUPPORT",
         metadata: {
           model,
-          questionLength: parsed.data.question.length
+          questionLength: parsed.data.question.length,
+          requestId
         }
       }
     });
