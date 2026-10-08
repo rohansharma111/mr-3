@@ -8,7 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [doctorCount, highPotential, callCount, sampleUnits, specialties, sampleProducts] =
+  try {
+    const [doctorCount, highPotential, callCount, sampleUnits, specialties, sampleProducts] =
     await Promise.all([
       prisma.doctor.count({ where: { isActive: true } }),
       prisma.doctor.count({ where: { isActive: true, potential: "HIGH" } }),
@@ -56,4 +57,7 @@ export async function GET() {
     topSpecialtyCount: specialties[0]?._count._all ?? 0,
     topMolecule: topProduct?.molecule ?? null
   });
+  } catch {
+    return NextResponse.json({ error: "Unable to load dashboard summary" }, { status: 500 });
+  }
 }
