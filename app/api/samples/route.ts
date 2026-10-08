@@ -93,7 +93,9 @@ export async function POST(request: NextRequest) {
   if (!doctor) return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
-  const sample = await prisma.$transaction(async (tx) => {
+  let sample;
+  try {
+    sample = await prisma.$transaction(async (tx) => {
     const created = await tx.sampleIssue.create({
       data: {
         doctorId: doctor.id,
@@ -131,7 +133,10 @@ export async function POST(request: NextRequest) {
     });
 
     return created;
-  });
+    });
+  } catch {
+    return NextResponse.json({ error: "Unable to issue sample" }, { status: 500 });
+  }
 
   return NextResponse.json(
     {
