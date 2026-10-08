@@ -59,6 +59,18 @@ type AiMessage = {
   content: string;
 };
 
+type DashboardSummary = {
+  doctors: number;
+  highPotential: number;
+  highPotentialPercent: number;
+  calls: number;
+  sampleUnits: number;
+  conversionRate: number | null;
+  topSpecialty: string | null;
+  topSpecialtyCount: number;
+  topMolecule: string | null;
+};
+
 const nav = [
   ["explorer", "◉", "Doctor Explorer"], ["potential", "↗", "Doctor Potential"],
   ["ai", "✦", "AI Support"], ["stockist", "▣", "Stockist Data"]
@@ -158,6 +170,7 @@ export default function Home() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [aiInput, setAiInput] = useState("");
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
     {
@@ -201,6 +214,16 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/dashboard/summary", { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Unable to load dashboard summary");
+        return response.json();
+      })
+      .then((data: DashboardSummary) => setDashboardSummary(data))
+      .catch(() => setDashboardSummary(null));
   }, []);
 
   useEffect(() => {
@@ -970,7 +993,7 @@ export default function Home() {
             </div></div>
           )}
 
-          <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Total Doctors: <b className="text-slate-900">1,243</b></span><span>High Potential: <b className="text-emerald-600">312 (25.1%)</b></span><span>Total Calls: <b className="text-slate-900">156</b></span><span>Samples: <b className="text-slate-900">320</b></span><span>Conversion Rate: <b className="text-blue-600">18.2%</b></span><span>Top Specialty: <b className="text-slate-900">Cardiologists (42%)</b></span><span>Top Molecule: <b className="text-slate-900">Aceclofenac + Paracetamol</b></span></div><button onClick={() => setSection("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
+          <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Doctors: <b className="text-slate-900">{dashboardSummary?.doctors ?? "—"}</b></span><span>High Potential: <b className="text-emerald-600">{dashboardSummary ? dashboardSummary.highPotential + " (" + dashboardSummary.highPotentialPercent + "%)" : "—"}</b></span><span>Your Calls: <b className="text-slate-900">{dashboardSummary?.calls ?? "—"}</b></span><span>Your Sample Units: <b className="text-slate-900">{dashboardSummary?.sampleUnits ?? "—"}</b></span><span>Conversion Rate: <b className="text-blue-600">{dashboardSummary?.conversionRate == null ? "Not tracked" : dashboardSummary.conversionRate + "%"}</b></span><span>Top Specialty: <b className="text-slate-900">{dashboardSummary?.topSpecialty ? dashboardSummary.topSpecialty + " (" + dashboardSummary.topSpecialtyCount + ")" : "—"}</b></span><span>Top Molecule: <b className="text-slate-900">{dashboardSummary?.topMolecule ?? "—"}</b></span></div><button onClick={() => setSection("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
         </div>
       </main>
     </div>
