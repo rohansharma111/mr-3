@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
 
   const unreadOnly = parsedQuery.data.unread === "true";
 
-  const [notifications, unreadCount] = await Promise.all([
+  try {
+    const [notifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({
       where: {
         userId: user.id,
@@ -47,6 +48,9 @@ export async function GET(request: NextRequest) {
       createdAt: notification.createdAt.toISOString()
     }))
   });
+  } catch {
+    return NextResponse.json({ error: "Unable to load notifications" }, { status: 500 });
+  }
 }
 
 export async function PATCH(request: NextRequest) {
