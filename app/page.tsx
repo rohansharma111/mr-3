@@ -992,89 +992,46 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900">AI Support</h2>
-                  <p className="text-sm text-slate-500">Data-grounded assistance from your MR 3.0 workspace</p>
+                  <p className="text-sm text-slate-500">Intelligent field support is coming soon to MR 3.0.</p>
                 </div>
-                <span className="text-xs bg-indigo-50 text-indigo-700 font-semibold px-3 py-1.5 rounded-xl border border-indigo-100">
-                  MR 3.0 AI · Server-side
+                <span className="text-xs bg-amber-50 text-amber-700 font-semibold px-3 py-1.5 rounded-xl border border-amber-200">
+                  Coming Soon
                 </span>
               </div>
 
               <div className="grid xl:grid-cols-12 gap-6">
-                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 flex flex-col h-[600px] shadow-sm">
-                  <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                    {aiMessages.map((message, index) => (
-                      <div key={index} className={"flex items-start gap-3 " + (message.role === "user" ? "justify-end" : "")}>
-                        {message.role === "assistant" && (
-                          <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">AI</div>
-                        )}
-                        <div className={(message.role === "user"
-                          ? "bg-blue-600 text-white rounded-2xl rounded-tr-none"
-                          : "bg-slate-100 text-slate-800 rounded-2xl rounded-tl-none") + " p-4 max-w-xl text-sm whitespace-pre-wrap"}>
-                          {message.content}
-                        </div>
-                      </div>
-                    ))}
-                    {aiLoading && (
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">AI</div>
-                        <div className="bg-slate-100 rounded-2xl rounded-tl-none p-4 text-sm text-slate-500">Thinking from MR 3.0 data…</div>
-                      </div>
-                    )}
+                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="p-8 md:p-12 text-center min-h-[600px] flex flex-col items-center justify-center">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-2xl font-black mb-5">✦</div>
+                    <h3 className="text-2xl font-black text-slate-900">AI Support is coming soon</h3>
+                    <p className="text-sm text-slate-500 max-w-lg mt-3 leading-6">
+                      We are preparing data-grounded AI assistance for doctor prioritization, territory insights, product discussions and field planning.
+                    </p>
+                    <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
+                      Your operational data stays available while AI is being prepared.
+                    </div>
+                    <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl text-left">
+                      {[
+                        "Doctor and territory insights",
+                        "Product and molecule intelligence",
+                        "Stockist-aware field guidance",
+                        "Call and plan assistance"
+                      ].map((item) => (
+                        <div key={item} className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs font-semibold text-slate-700">{item}</div>
+                      ))}
+                    </div>
                   </div>
-
-                  <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2">
-                    {[
-                      "Top 10 cardiologists in Andheri",
-                      "Highest potential in Veera Desai",
-                      "Antibiotics in territory",
-                      "Promote to Dr. Ankit Rawal"
-                    ].map((question) => (
-                      <button
-                        key={question}
-                        onClick={() => askAi(question)}
-                        disabled={aiLoading}
-                        className="text-xs bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 disabled:opacity-50 px-3 py-1.5 rounded-full"
-                      >
-                        {question}
-                      </button>
-                    ))}
-                  </div>
-
-                  <form
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      void askAi();
-                    }}
-                    className="p-4 border-t border-slate-200 flex gap-3"
-                  >
-                    <input
-                      value={aiInput}
-                      onChange={(event) => setAiInput(event.target.value)}
-                      disabled={aiLoading}
-                      placeholder="Ask me anything about your MR 3.0 data…"
-                      maxLength={1200}
-                      className="flex-1 bg-slate-100 border border-slate-200 rounded-full px-5 py-3 text-sm outline-none focus:bg-white focus:border-blue-500 disabled:opacity-60"
-                    />
-                    <button
-                      type="submit"
-                      disabled={aiLoading || !aiInput.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white w-11 h-11 rounded-full"
-                    >
-                      ➤
-                    </button>
-                  </form>
                 </div>
 
                 <div className="xl:col-span-4 space-y-5">
                   <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm">
-                    <h3 className="font-bold">✦ What AI can use</h3>
+                    <h3 className="font-bold">✦ Planned capability</h3>
                     <div className="mt-4 space-y-2 text-xs">
                       {[
-                        "Doctor profiles and potential scores",
-                        "Products and molecules",
-                        "Stockist inventory",
-                        "Your calls and upcoming plans",
-                        "Your issued samples"
+                        "Grounded in authenticated MR 3.0 data",
+                        "Server-side provider integration",
+                        "Per-user rate limiting",
+                        "No AI provider spend required for core MR 3.0 workflows"
                       ].map((item) => (
                         <div key={item} className="bg-white/10 rounded-xl p-3.5">{item}</div>
                       ))}
@@ -1082,9 +1039,9 @@ export default function Home() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Grounding policy</h4>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ready for future activation</h4>
                     <p className="text-xs text-slate-600 mt-3 leading-5">
-                      Answers are generated from authenticated MR 3.0 operational data. The assistant is instructed not to invent missing business facts or provide clinical treatment advice.
+                      The server-side AI integration remains implemented behind the AI Support API. When an approved provider key and model are configured, the capability can be enabled without redesigning the data layer.
                     </p>
                   </div>
                 </div>
