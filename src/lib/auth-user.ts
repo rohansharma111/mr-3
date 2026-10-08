@@ -8,6 +8,7 @@ export const ROLES = {
 } as const;
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES];
+export const ALL_ROLES: readonly AppRole[] = Object.values(ROLES);
 
 export async function getAuthenticatedUser() {
   const session = await auth();
@@ -15,15 +16,27 @@ export async function getAuthenticatedUser() {
 
   if (!userId) return null;
 
-  return prisma.user.findFirst({
+  const user = await prisma.user.findFirst({
     where: { id: userId, isActive: true }
   });
+
+  if (!user || !hasAnyRole(user.role, ALL_ROLES)) {
+    return null;
+  }
+
+  return user;
 }
 
-export async function requireAuthenticatedUser() {
+export async function requireAuthenticatedUser(
+  allowedRoles?: readonly AppRole[]
+) {
   const user = await getAuthenticatedUser();
 
   if (!user) throw new Error("UNAUTHORIZED");
+
+  if (allowedRoles && !hasAnyRole(user.role, allowedRoles)) {
+    throw new Error("FORBIDDEN");
+  }
 
   return user;
 }
