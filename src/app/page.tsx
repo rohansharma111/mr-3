@@ -60,6 +60,9 @@ export default function Home() {
   const [callNotes, setCallNotes] = useState("");
   const [callSaving, setCallSaving] = useState(false);
   const [callMessage, setCallMessage] = useState("");
+  const [callHistory, setCallHistory] = useState<any[]>([]);
+  const [callsLoading, setCallsLoading] = useState(false);
+  const [callFilter, setCallFilter] = useState("ALL");
 
   useEffect(() => {
     let cancelled = false;
@@ -243,41 +246,36 @@ export default function Home() {
             <section className="space-y-6"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Stockist Data</h2><p className="text-sm text-slate-500">Real-time stockist performance & availability</p></div><div className="flex gap-2"><select className="text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl"><option>Mumbai</option><option>Delhi</option></select><select className="text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl"><option>Andheri Region</option><option>Bandra Region</option></select></div></div><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Total Stockists","48"],["In Stock","41"],["Low Stock","5"],["Out of Stock","2"]].map(([a,b])=><div key={a} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><div className="text-xs uppercase tracking-wider font-semibold text-slate-400">{a}</div><div className="text-2xl font-black text-slate-900 mt-1">{b}</div></div>)}</div><div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm"><div className="px-5 py-4 border-b border-slate-100 font-bold">Aceclofenac + Paracetamol Availability</div><table className="w-full text-sm"><thead className="bg-slate-50 text-xs text-slate-500 uppercase"><tr><th className="p-3 text-left">Stockist</th><th className="p-3 text-left">Location</th><th className="p-3 text-left">Quantity</th><th className="p-3 text-left">Updated</th><th className="p-3 text-left">Status</th></tr></thead><tbody>{[["Shree Sai Medicals","Veera Desai Rd","480 strips","2 hrs ago","Good"],["HealthCare Distributors","Versova","320 strips","5 hrs ago","Good"],["Andheri Medico","Andheri Station","110 strips","1 day ago","Average"],["Lokhandwala Pharma","Lokhandwala","25 strips","2 days ago","Low"]].map(row=><tr key={row[0]} className="border-t border-slate-100"><td className="p-3 font-bold">{row[0]}</td><td className="p-3">{row[1]}</td><td className="p-3 font-mono">{row[2]}</td><td className="p-3 text-slate-500">{row[3]}</td><td className="p-3"><span className={(row[4]==="Good"?"bg-emerald-100 text-emerald-800":row[4]==="Average"?"bg-amber-100 text-amber-800":"bg-red-100 text-red-800")+" text-xs font-bold px-2.5 py-1 rounded-full"}>{row[4]}</span></td></tr>)}</tbody></table></div></section>
           )}
 
-          {!["explorer","potential","ai","stockist"].includes(section) && (
-            <section className="space-y-4"><h2 className="text-2xl font-black text-slate-900">{execution.find(x => x[0] === section)?.[2]}</h2><p className="text-sm text-slate-500">Module boundary established; persistent workflow is next.</p><div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">This module is intentionally being connected to the production data model instead of remaining an alert placeholder.</div></section>
+          {section === "calls" && (
+            <section className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div><h2 className="text-2xl font-black text-slate-900">My Calls</h2><p className="text-sm text-slate-500">Recent field activity recorded in MR 3.0</p></div>
+                <div className="flex items-center gap-2">
+                  <select value={callFilter} onChange={async (e) => {
+                    const next=e.target.value; setCallFilter(next); setCallsLoading(true);
+                    try { const r=await fetch("/api/calls?limit=100"+(next!=="ALL"?"&status="+next:""),{cache:"no-store"}); const d=await r.json(); setCallHistory(d.calls||[]); } finally { setCallsLoading(false); }
+                  }} className="text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl">
+                    <option value="ALL">All statuses</option><option value="COMPLETED">Completed</option><option value="PLANNED">Planned</option><option value="MISSED">Missed</option><option value="CANCELLED">Cancelled</option>
+                  </select>
+                  <button onClick={async()=>{setCallsLoading(true);try{const r=await fetch("/api/calls?limit=100"+(callFilter!=="ALL"?"&status="+callFilter:""),{cache:"no-store"});const d=await r.json();setCallHistory(d.calls||[])}finally{setCallsLoading(false)}}} className="bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">↻ Refresh</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[["Total Calls",callHistory.length],["Completed",callHistory.filter(c=>c.status==="COMPLETED").length],["Follow-ups",callHistory.filter(c=>/follow-up/i.test(c.outcome)).length],["Doctors Covered",new Set(callHistory.map(c=>c.doctorName)).size].map(([label,value])=><div key={String(label)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><div className="text-xs uppercase tracking-wider font-semibold text-slate-400">{label}</div><div className="text-2xl font-black mt-1">{value}</div></div>)}
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100"><h3 className="font-bold">Call History</h3><p className="text-xs text-slate-500 mt-1">Every saved call is persisted and auditable.</p></div>
+                {callsLoading ? <div className="p-10 text-center text-sm text-slate-500">Loading call history…</div> :
+                  callHistory.length===0 ? <div className="p-10 text-center text-sm text-slate-500">No calls found. Log a call from a doctor profile to get started.</div> :
+                  <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500"><tr><th className="p-3">Doctor</th><th className="p-3">Product</th><th className="p-3">Outcome</th><th className="p-3">Notes</th><th className="p-3">Status</th><th className="p-3">Date</th></tr></thead>
+                    <tbody className="divide-y divide-slate-100">{callHistory.map(call=><tr key={call.id} className="hover:bg-slate-50"><td className="p-3"><b>{call.doctorName}</b><div className="text-xs text-slate-500">{call.specialty}</div></td><td className="p-3 text-slate-600">{call.productName||"—"}</td><td className="p-3 text-slate-700">{call.outcome}</td><td className="p-3 text-slate-500 max-w-xs">{call.notes||"—"}</td><td className="p-3"><span className={(call.status==="COMPLETED"?"bg-emerald-100 text-emerald-800":"bg-amber-100 text-amber-800")+" text-xs font-bold px-2 py-1 rounded-full"}>{call.status}</span></td><td className="p-3 whitespace-nowrap text-xs text-slate-500">{new Date(call.calledAt).toLocaleString()}</td></tr>)}</tbody>
+                  </table></div>}
+              </div>
+            </section>
           )}
 
-          {callOpen && selectedDoctor && (
-            <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="call-dialog-title">
-              <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
-                <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
-                  <div><h3 id="call-dialog-title" className="text-lg font-black text-slate-900">Log Call</h3><p className="text-xs text-slate-500 mt-1">{selectedDoctor.name} · {selectedDoctor.clinic}</p></div>
-                  <button onClick={() => setCallOpen(false)} disabled={callSaving} className="text-slate-400 hover:text-slate-700 text-xl" aria-label="Close">×</button>
-                </div>
-                <form className="p-6 space-y-4" onSubmit={async (event) => {
-                  event.preventDefault();
-                  setCallSaving(true); setCallMessage("");
-                  try {
-                    const response = await fetch("/api/calls", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ doctorId: selectedDoctor.id, outcome: callOutcome, notes: callNotes, status: "COMPLETED" })
-                    });
-                    const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || "Unable to log call");
-                    setCallMessage("Call logged successfully and added to the audit trail.");
-                    setTimeout(() => setCallOpen(false), 900);
-                  } catch (e) {
-                    setCallMessage(e instanceof Error ? e.message : "Unable to log call");
-                  } finally { setCallSaving(false); }
-                }}>
-                  <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Outcome</label><select value={callOutcome} onChange={(e) => setCallOutcome(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white"><option>Positive on product discussion</option><option>Requested follow-up</option><option>Samples requested</option><option>Not interested</option><option>Doctor unavailable</option></select></div>
-                  <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Notes</label><textarea value={callNotes} onChange={(e) => setCallNotes(e.target.value)} maxLength={5000} rows={5} placeholder="Record the key discussion, objection or next action..." className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none outline-none focus:border-blue-500" /></div>
-                  {callMessage && <div className={"rounded-xl px-3 py-2.5 text-xs font-semibold " + (callMessage.startsWith("Call logged") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>{callMessage}</div>}
-                  <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setCallOpen(false)} disabled={callSaving} className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700">Cancel</button><button type="submit" disabled={callSaving} className="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white disabled:opacity-60">{callSaving ? "Saving…" : "Save Call"}</button></div>
-                </form>
-              </div>
-            </div>
+          {!["explorer","potential","ai","stockist","calls"].includes(section) && (
+            <section className="space-y-4"><h2 className="text-2xl font-black text-slate-900">{execution.find(x => x[0] === section)?.[2]}</h2><p className="text-sm text-slate-500">Module boundary established; persistent workflow is next.</p><div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">This module is intentionally being connected to the production data model instead of remaining an alert placeholder.</div></section>
           )}
 
           <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Total Doctors: <b className="text-slate-900">1,243</b></span><span>High Potential: <b className="text-emerald-600">312 (25.1%)</b></span><span>Total Calls: <b className="text-slate-900">156</b></span><span>Samples: <b className="text-slate-900">320</b></span><span>Conversion Rate: <b className="text-blue-600">18.2%</b></span><span>Top Specialty: <b className="text-slate-900">Cardiologists (42%)</b></span><span>Top Molecule: <b className="text-slate-900">Aceclofenac + Paracetamol</b></span></div><button onClick={() => setSection("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
