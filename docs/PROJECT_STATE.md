@@ -325,3 +325,8 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - No schema or data changes were made in this increment; the existing plan uniqueness constraint is now surfaced safely at the API boundary.
 - Unexpected plan-creation failures return a sanitized server error without exposing database details.
 \n
+## Mutation error-boundary hardening milestone
+- Call creation, sample issue creation/status updates, and target save transactions now use sanitized API error boundaries.
+- Unexpected database/transaction failures return controlled HTTP 500 responses without exposing Prisma, SQL, schema, or infrastructure details.
+- Existing validation, authentication, audit/notification transactions, and business behavior are unchanged.
+\n
