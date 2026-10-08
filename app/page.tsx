@@ -109,7 +109,6 @@ export default function Home() {
   const [selected, setSelected] = useState<Doctor | null>(null);
   const [period, setPeriod] = useState<"This Month" | "Last 3 Months">("Last 3 Months");
   const [writingPattern, setWritingPattern] = useState<WritingPattern | null>(null);
-  const [writingPatternLoading, setWritingPatternLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [callOpen, setCallOpen] = useState(false);
@@ -214,7 +213,6 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
-    setWritingPatternLoading(true);
     fetch("/api/analytics/writing-pattern?period=" + encodeURIComponent(period), { cache: "no-store" })
       .then(async response => {
         if (!response.ok) throw new Error("Unable to load writing pattern");
@@ -222,7 +220,6 @@ export default function Home() {
       })
       .then((data: WritingPattern) => { if (!cancelled) setWritingPattern(data); })
       .catch(() => { if (!cancelled) setWritingPattern(null); })
-      .finally(() => { if (!cancelled) setWritingPatternLoading(false); });
     return () => { cancelled = true; };
   }, [period]);
 
