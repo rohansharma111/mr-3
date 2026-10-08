@@ -330,3 +330,8 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Unexpected database/transaction failures return controlled HTTP 500 responses without exposing Prisma, SQL, schema, or infrastructure details.
 - Existing validation, authentication, audit/notification transactions, and business behavior are unchanged.
 \n
+
+## Read-path error-boundary hardening milestone
+- Reports, dashboard summary, metadata, and writing-pattern read APIs now return sanitized server errors when unexpected database/runtime failures occur.
+- Read-path failures no longer expose Prisma/SQL/infrastructure details to authenticated clients.
+- Normal validation, authentication, 404 behavior, and response contracts remain unchanged.
