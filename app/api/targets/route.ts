@@ -3,17 +3,21 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 
+const dateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 const targetSchema = z.object({
-  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  periodStart: dateOnlySchema,
+  periodEnd: dateOnlySchema,
   targetCalls: z.number().int().min(0).max(100000),
   targetSamples: z.number().int().min(0).max(1000000),
   targetConversions: z.number().int().min(0).max(100000)
 });
 
 function parseDateOnly(value: string) {
+  if (!dateOnlySchema.safeParse(value).success) return null;
   const date = new Date(value + "T00:00:00.000Z");
-  return Number.isNaN(date.getTime()) ? null : date;
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) return null;
+  return date;
 }
 
 function endExclusive(date: Date) {
@@ -29,12 +33,15 @@ export async function GET(request: NextRequest) {
   const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const defaultEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
 
-  const start = parseDateOnly(
-    params.get("from") || defaultStart.toISOString().slice(0, 10)
-  );
-  const end = parseDateOnly(
-    params.get("to") || defaultEnd.toISOString().slice(0, 10)
-  );
+  const from = params.get("from");
+  const to = params.get("to");
+
+  if ((from && !dateOnlySchema.safeParse(from).success) || (to && !dateOnlySchema.safeParse(to).success)) {
+    return NextResponse.json({ error: "Invalid target date filter" }, { status: 400 });
+  }
+
+  const start = parseDateOnly(from || defaultStart.toISOString().slice(0, 10));
+  const end = parseDateOnly(to || defaultEnd.toISOString().slice(0, 10));
 
   if (!start || !end || start > end) {
     return NextResponse.json({ error: "Invalid target period" }, { status: 400 });
