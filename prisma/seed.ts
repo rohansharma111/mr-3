@@ -64,6 +64,30 @@ async function main() {
     });
   }
 
+
+  const writingPatternSnapshots = [
+    {
+      period: "This Month",
+      categories: [["Pain Relievers", 45], ["Antibiotics", 20], ["Gastro Medicines", 16], ["Vitamins / Supplements", 12], ["Others", 7]],
+      molecules: [["Aceclofenac + Paracetamol", "30%"], ["Paracetamol", "15%"], ["Etoricoxib", "11%"], ["Amoxicillin + Clavulanate", "9%"], ["Pantoprazole", "8%"], ["Vitamin D3", "6%"], ["Others", "21%"]],
+      insight: "Pain Relievers jumped to 45% this month due to seasonal joint flare-ups."
+    },
+    {
+      period: "Last 3 Months",
+      categories: [["Pain Relievers", 42], ["Antibiotics", 22], ["Gastro Medicines", 15], ["Vitamins / Supplements", 12], ["Others", 9]],
+      molecules: [["Aceclofenac + Paracetamol", "28%"], ["Paracetamol", "14%"], ["Etoricoxib", "12%"], ["Amoxicillin + Clavulanate", "10%"], ["Pantoprazole", "8%"], ["Vitamin D3", "5%"], ["Others", "23%"]],
+      insight: "Doctor prescribes Pain Relievers most frequently (42%). Focus on Pain Management products."
+    }
+  ] as const;
+
+  for (const snapshot of writingPatternSnapshots) {
+    await prisma.writingPatternSnapshot.upsert({
+      where: { period: snapshot.period },
+      update: { categories: snapshot.categories, molecules: snapshot.molecules, insight: snapshot.insight, sourceLabel: "PROTOTYPE_SOURCE" },
+      create: { period: snapshot.period, categories: snapshot.categories, molecules: snapshot.molecules, insight: snapshot.insight, sourceLabel: "PROTOTYPE_SOURCE" }
+    });
+  }
+
   console.log("MR 3.0 demo seed complete");
 }
 
