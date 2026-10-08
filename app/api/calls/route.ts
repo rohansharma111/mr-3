@@ -83,7 +83,9 @@ export async function POST(request: NextRequest) {
     if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  const call = await prisma.$transaction(async (tx) => {
+  let call;
+  try {
+    call = await prisma.$transaction(async (tx) => {
     const created = await tx.call.create({
       data: {
         doctorId: doctor.id,
@@ -122,7 +124,10 @@ export async function POST(request: NextRequest) {
     });
 
     return created;
-  });
+    });
+  } catch {
+    return NextResponse.json({ error: "Unable to create call log" }, { status: 500 });
+  }
 
   return NextResponse.json({
     id: call.id,
