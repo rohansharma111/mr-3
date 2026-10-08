@@ -31,6 +31,18 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is required.");
 }
 
+const prismaCli = resolve(process.cwd(), "node_modules", "prisma", "build", "index.js");
+if (!existsSync(prismaCli)) {
+  throw new Error("Prisma CLI was not found at node_modules/prisma/build/index.js. Run npm install first.");
+}
+
+function runPrisma(args: string[], options?: { encoding?: "utf8"; stdio?: "inherit" | ["ignore", "pipe", "pipe"] }) {
+  return execFileSync(process.execPath, [prismaCli, ...args], {
+    encoding: options?.encoding,
+    stdio: options?.stdio ?? "inherit"
+  });
+}
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -45,10 +57,8 @@ async function main() {
       );
     }
 
-    const schemaDiff = execFileSync(
-      process.platform === "win32" ? "npx.cmd" : "npx",
+    const schemaDiff = runPrisma(
       [
-        "prisma",
         "migrate",
         "diff",
         "--from-schema-datasource",
@@ -90,11 +100,7 @@ async function main() {
 
     for (const migration of migrations) {
       console.log("Resolving applied migration: " + migration);
-      execFileSync(
-        process.platform === "win32" ? "npx.cmd" : "npx",
-        ["prisma", "migrate", "resolve", "--applied", migration],
-        { stdio: "inherit" }
-      );
+      runPrisma(["migrate", "resolve", "--applied", migration]);
     }
 
     console.log(
