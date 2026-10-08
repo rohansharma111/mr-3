@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth-user";
 
-const demoUserEmail = "amit.rawat@mr3.demo";
 const statuses = ["ISSUED", "RETURNED", "CANCELLED"] as const;
 
 const issueSchema = z.object({
@@ -13,13 +13,16 @@ const issueSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const doctorId = searchParams.get("doctorId");
   const status = searchParams.get("status");
 
   const issues = await prisma.sampleIssue.findMany({
     where: {
-      user: { email: demoUserEmail },
+      userId: user.id,
       ...(doctorId ? { doctorId } : {}),
       ...(status && statuses.includes(status as typeof statuses[number]) ? { status } : {})
     },
@@ -51,8 +54,8 @@ export async function POST(request: NextRequest) {
   const parsed = issueSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid sample issue", details: parsed.error.flatten() }, { status: 400 });
 
-  const user = await prisma.user.findUnique({ where: { email: demoUserEmail } });
-  if (!user || !user.isActive) return NextResponse.json({ error: "Active user not configured" }, { status: 500 });
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [doctor, product] = await Promise.all([
     prisma.doctor.findFirst({ where: { id: parsed.data.doctorId, isActive: true }, select: { id: true, name: true } }),
