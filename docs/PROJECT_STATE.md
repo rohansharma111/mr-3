@@ -90,8 +90,16 @@ Important source-derived demo values:
 - The Prisma schema and repeatable seed now represent these values explicitly as UI map coordinates rather than geographic GPS.
 - The legacy latitude/longitude values were retained unchanged to avoid destructive data mutation; application code no longer treats them as map coordinates.
 
+## Dashboard summary milestone
+
+- Added authenticated `GET /api/dashboard/summary`.
+- Replaced the prototype footer's hardcoded KPI claims with values calculated from the development database and authenticated user's activity.
+- Conversion rate remains explicitly `Not tracked` because no conversion event model exists.
+- Top specialty is calculated from active doctors; top molecule is calculated from issued sample activity for the authenticated user.
+- No schema change was required for this milestone.
+
 ## Immediate next steps
-1. Run a full local/Vercel build validation against the current development branch; the connected environment cannot currently execute a networked npm install/build.
+1. Run a full local/Vercel build validation against the current development branch; the connected environment cannot currently execute a networked npm install/build. The login page now wraps its `useSearchParams()` consumer in `Suspense`, matching the Next.js App Router guidance.
 2. Verify the seed path after the Prisma field-to-column mapping alignment.
 3. Move subsequent implementation work onto the GitHub `development` branch.
 3. Add API/database-driven patch and specialty metadata instead of hardcoded filter arrays.
