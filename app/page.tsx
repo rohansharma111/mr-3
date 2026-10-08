@@ -53,6 +53,11 @@ type Doctor = {
   dist: string;
 };
 
+type AiMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 const patches = [
   ["Veera Desai", 19], ["Vile Parle", 25], ["Versova", 21],
   ["Andheri Station", 18], ["Oshiwara", 15], ["Lokhandwala", 16],
@@ -155,6 +160,14 @@ export default function Home() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [aiInput, setAiInput] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiMessages, setAiMessages] = useState<AiMessage[]>([
+    {
+      role: "assistant",
+      content: "Hi! 👋 I’m MR 3.0 AI Support. Ask about doctors, products, stockists, recent activity, or your upcoming plan."
+    }
+  ]);
 
   useEffect(() => {
     fetch("/api/products", { cache: "no-store" })
@@ -430,6 +443,43 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [section, callFilter]);
 
+  const askAi = async (question?: string) => {
+    const text = (question ?? aiInput).trim();
+    if (!text || aiLoading) return;
+
+    setAiInput("");
+    setAiMessages((messages) => [...messages, { role: "user", content: text }]);
+    setAiLoading(true);
+
+    try {
+      const response = await fetch("/api/ai/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text })
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to reach AI Support.");
+      }
+
+      setAiMessages((messages) => [
+        ...messages,
+        { role: "assistant", content: data.answer || "No answer was returned." }
+      ]);
+    } catch (error) {
+      setAiMessages((messages) => [
+        ...messages,
+        {
+          role: "assistant",
+          content: error instanceof Error ? error.message : "AI Support is temporarily unavailable."
+        }
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const writing = writingPatterns[period];
   const selectedDoctor = selected ?? doctors[0] ?? null;
 
@@ -583,8 +633,107 @@ export default function Home() {
           )}
 
           {section === "ai" && (
-            <section className="space-y-6"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">AI Support</h2><p className="text-sm text-slate-500">Your AI assistant for any query</p></div><span className="text-xs bg-indigo-50 text-indigo-700 font-semibold px-3 py-1.5 rounded-xl border border-indigo-100">Model: MR3-Clinical-v4</span></div>
-              <div className="grid xl:grid-cols-12 gap-6"><div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 flex flex-col h-[600px] shadow-sm"><div className="flex-1 overflow-y-auto p-5"><div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">AI</div><div className="bg-slate-100 rounded-2xl rounded-tl-none p-4 max-w-xl text-sm"><b>Hi Amit! 👋</b><p className="mt-1">I'm MR 3.0 AI Assistant. I can help you find the best products, understand doctor preferences and more.</p></div></div></div><div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2">{["Top 10 cardiologists in Andheri","Highest potential in Veera Desai","Antibiotics in territory","Promote to Dr. Ankit Rawal"].map(x=><button key={x} className="text-xs bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 px-3 py-1.5 rounded-full">{x}</button>)}</div><div className="p-4 border-t border-slate-200 flex gap-3"><input placeholder="Ask me anything..." className="flex-1 bg-slate-100 border border-slate-200 rounded-full px-5 py-3 text-sm outline-none focus:bg-white focus:border-blue-500"/><button className="bg-blue-600 hover:bg-blue-700 text-white w-11 h-11 rounded-full">➤</button></div></div><div className="xl:col-span-4 space-y-5"><div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm"><h3 className="font-bold">✦ AI Recommendation</h3><div className="mt-4 space-y-2 text-xs"><div className="bg-white/10 rounded-xl p-3.5 flex justify-between"><b>CardiaPain Plus</b><span>Match 98%</span></div><div className="bg-white/10 rounded-xl p-3.5 flex justify-between"><b>CardiaRelief</b><span>Alternative</span></div><div className="bg-white/10 rounded-xl p-3.5 flex justify-between"><b>CardiaMove</b><span>Alternative</span></div></div></div><div className="bg-white rounded-2xl border border-slate-200 p-5"><h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Previous Discussion</h4><div className="bg-slate-50 border-l-4 border-blue-600 p-3.5 rounded-r-xl text-xs mt-3"><b>Doctor showed interest in pain-management products during the previous call.</b><div className="text-slate-400 mt-1">Logged 12 May · Mr. Amit Rawat</div></div></div></div></div>
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900">AI Support</h2>
+                  <p className="text-sm text-slate-500">Data-grounded assistance from your MR 3.0 workspace</p>
+                </div>
+                <span className="text-xs bg-indigo-50 text-indigo-700 font-semibold px-3 py-1.5 rounded-xl border border-indigo-100">
+                  MR 3.0 AI · Server-side
+                </span>
+              </div>
+
+              <div className="grid xl:grid-cols-12 gap-6">
+                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 flex flex-col h-[600px] shadow-sm">
+                  <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                    {aiMessages.map((message, index) => (
+                      <div key={index} className={"flex items-start gap-3 " + (message.role === "user" ? "justify-end" : "")}>
+                        {message.role === "assistant" && (
+                          <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">AI</div>
+                        )}
+                        <div className={(message.role === "user"
+                          ? "bg-blue-600 text-white rounded-2xl rounded-tr-none"
+                          : "bg-slate-100 text-slate-800 rounded-2xl rounded-tl-none") + " p-4 max-w-xl text-sm whitespace-pre-wrap"}>
+                          {message.content}
+                        </div>
+                      </div>
+                    ))}
+                    {aiLoading && (
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">AI</div>
+                        <div className="bg-slate-100 rounded-2xl rounded-tl-none p-4 text-sm text-slate-500">Thinking from MR 3.0 data…</div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="px-5 py-2.5 bg-slate-50 border-t border-slate-100 flex flex-wrap gap-2">
+                    {[
+                      "Top 10 cardiologists in Andheri",
+                      "Highest potential in Veera Desai",
+                      "Antibiotics in territory",
+                      "Promote to Dr. Ankit Rawal"
+                    ].map((question) => (
+                      <button
+                        key={question}
+                        onClick={() => askAi(question)}
+                        disabled={aiLoading}
+                        className="text-xs bg-white border border-slate-200 hover:border-blue-400 hover:text-blue-600 disabled:opacity-50 px-3 py-1.5 rounded-full"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void askAi();
+                    }}
+                    className="p-4 border-t border-slate-200 flex gap-3"
+                  >
+                    <input
+                      value={aiInput}
+                      onChange={(event) => setAiInput(event.target.value)}
+                      disabled={aiLoading}
+                      placeholder="Ask me anything about your MR 3.0 data…"
+                      maxLength={1200}
+                      className="flex-1 bg-slate-100 border border-slate-200 rounded-full px-5 py-3 text-sm outline-none focus:bg-white focus:border-blue-500 disabled:opacity-60"
+                    />
+                    <button
+                      type="submit"
+                      disabled={aiLoading || !aiInput.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white w-11 h-11 rounded-full"
+                    >
+                      ➤
+                    </button>
+                  </form>
+                </div>
+
+                <div className="xl:col-span-4 space-y-5">
+                  <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm">
+                    <h3 className="font-bold">✦ What AI can use</h3>
+                    <div className="mt-4 space-y-2 text-xs">
+                      {[
+                        "Doctor profiles and potential scores",
+                        "Products and molecules",
+                        "Stockist inventory",
+                        "Your calls and upcoming plans",
+                        "Your issued samples"
+                      ].map((item) => (
+                        <div key={item} className="bg-white/10 rounded-xl p-3.5">{item}</div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Grounding policy</h4>
+                    <p className="text-xs text-slate-600 mt-3 leading-5">
+                      Answers are generated from authenticated MR 3.0 operational data. The assistant is instructed not to invent missing business facts or provide clinical treatment advice.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </section>
           )}
 
