@@ -146,6 +146,7 @@ const formatLocalDate = (date: Date) => {
 
 export default function Home() {
   const [section, setSection] = useState("explorer");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [patch, setPatch] = useState("Veera Desai");
   const [specialty, setSpecialty] = useState("All");
   const [patches, setPatches] = useState<{ id: string; name: string; doctorCount: number }[]>([]);
@@ -219,6 +220,24 @@ export default function Home() {
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const selectedDoctor = selected ?? doctors[0] ?? null;
+
+  const sectionMeta: Record<string, { title: string; description: string }> = {
+    explorer: { title: "Doctor Explorer", description: "Discover and prioritize doctors using persisted field intelligence." },
+    potential: { title: "Doctor Potential", description: "Review doctor activity, history, and available insights." },
+    ai: { title: "AI Support", description: "Field assistance is being prepared for a future release." },
+    stockist: { title: "Stockist Data", description: "Monitor inventory availability from persisted stockist data." },
+    plan: { title: "My Plan", description: "Plan and manage your upcoming field visits." },
+    calls: { title: "My Calls", description: "Review your persisted call activity and outcomes." },
+    samples: { title: "Samples", description: "Issue and review sample activity using live inventory data." },
+    targets: { title: "Targets", description: "Manage period targets and compare them with actual activity." },
+    reports: { title: "Reports", description: "Review performance metrics calculated from persisted activity." },
+    notifications: { title: "Notifications", description: "Stay on top of workflow updates and actions." }
+  };
+  const currentSection = sectionMeta[section] ?? sectionMeta.explorer;
+  const navigate = (nextSection: string) => {
+    setSection(nextSection);
+    setMobileNavOpen(false);
+  };
 
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
     {
@@ -688,7 +707,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-5">
-            <button onClick={() => setSection("notifications")} className="text-slate-600 hover:text-blue-600 relative text-lg" aria-label="Notifications">
+            <button onClick={() => navigate("notifications")} className="h-10 w-10 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-blue-600 relative text-lg" aria-label="Notifications">
               ◉
               {unreadNotifications > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}
             </button>
@@ -696,7 +715,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
           {section === "explorer" && (
             <section className="space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1243,7 +1262,7 @@ export default function Home() {
             </div></div>
           )}
 
-          <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Doctors: <b className="text-slate-900">{dashboardSummary?.doctors ?? "—"}</b></span><span>High Potential: <b className="text-emerald-600">{dashboardSummary ? dashboardSummary.highPotential + " (" + dashboardSummary.highPotentialPercent + "%)" : "—"}</b></span><span>Your Calls: <b className="text-slate-900">{dashboardSummary?.calls ?? "—"}</b></span><span>Your Sample Units: <b className="text-slate-900">{dashboardSummary?.sampleUnits ?? "—"}</b></span><span>Conversion Rate: <b className="text-blue-600">{dashboardSummary?.conversionRate == null ? "Not tracked" : dashboardSummary.conversionRate + "%"}</b></span><span>Top Specialty: <b className="text-slate-900">{dashboardSummary?.topSpecialty ? dashboardSummary.topSpecialty + " (" + dashboardSummary.topSpecialtyCount + ")" : "—"}</b></span><span>Top Molecule: <b className="text-slate-900">{dashboardSummary?.topMolecule ?? "—"}</b></span></div><button onClick={() => setSection("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
+          <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Doctors: <b className="text-slate-900">{dashboardSummary?.doctors ?? "—"}</b></span><span>High Potential: <b className="text-emerald-600">{dashboardSummary ? dashboardSummary.highPotential + " (" + dashboardSummary.highPotentialPercent + "%)" : "—"}</b></span><span>Your Calls: <b className="text-slate-900">{dashboardSummary?.calls ?? "—"}</b></span><span>Your Sample Units: <b className="text-slate-900">{dashboardSummary?.sampleUnits ?? "—"}</b></span><span>Conversion Rate: <b className="text-blue-600">{dashboardSummary?.conversionRate == null ? "Not tracked" : dashboardSummary.conversionRate + "%"}</b></span><span>Top Specialty: <b className="text-slate-900">{dashboardSummary?.topSpecialty ? dashboardSummary.topSpecialty + " (" + dashboardSummary.topSpecialtyCount + ")" : "—"}</b></span><span>Top Molecule: <b className="text-slate-900">{dashboardSummary?.topMolecule ?? "—"}</b></span></div><button onClick={() => navigate("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
         </div>
       </main>
     </div>
