@@ -342,3 +342,7 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - The correlation ID is not used as authentication and no PHI, credentials, prompts, or database payloads are logged.
 
 - Request correlation IDs are now attached at the proxy boundary for API and page responses, including redirects; API route authentication remains enforced by each route.
+## API read/update error-boundary completion milestone
+- Notifications GET/PATCH, products GET, doctors GET, and stockists GET now sanitize unexpected database/runtime failures.
+- Plans PATCH now has the same controlled error boundary.
+- These changes do not alter authentication, validation, query scope, or response behavior on successful requests.
