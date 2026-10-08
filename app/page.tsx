@@ -668,8 +668,12 @@ export default function Home() {
   );
 
   return (
-    <div className="h-screen overflow-hidden flex bg-slate-50">
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 select-none">
+    <div className="mr-app-shell h-screen overflow-hidden flex bg-slate-50">
+      {mobileNavOpen && (
+        <button type="button" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[2px] md:hidden" />
+      )}
+      <aside className={"mr-sidebar w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 select-none" + (mobileNavOpen ? " mr-sidebar-open" : "")}>
         <div>
           <div className="p-5 border-b border-slate-800">
             <h1 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
@@ -679,7 +683,7 @@ export default function Home() {
           </div>
           <nav className="p-3 space-y-1 text-sm font-medium">
             {nav.map(([id, icon, label]) => (
-              <button key={id} onClick={() => setSection(id)}
+              <button key={id} onClick={() => navigate(id)}
                 className={"w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left " + (section === id ? "bg-blue-800 text-white border-l-4 border-blue-400" : "hover:bg-slate-800")}>
                 <span className="w-5 text-center">{icon}</span>{label}
               </button>
@@ -696,9 +700,15 @@ export default function Home() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
+        <header className="mr-topbar bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4 flex-1 max-w-2xl">
-            <button className="text-slate-500 hover:text-slate-800 text-lg">☰</button>
+            <button type="button" aria-label="Open navigation" aria-expanded={mobileNavOpen}
+              onClick={() => setMobileNavOpen(true)}
+              className="mr-menu-button h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900">☰</button>
+            <div className="hidden sm:block min-w-0 mr-section-heading">
+              <div className="text-sm font-black text-slate-900 truncate">{currentSection.title}</div>
+              <div className="text-[11px] text-slate-400 truncate">{currentSection.description}</div>
+            </div>
             <div className="relative flex-1">
               <span className="absolute left-3.5 top-2.5 text-slate-400">⌕</span>
               <input value={query} onChange={(e) => setQuery(e.target.value)}
