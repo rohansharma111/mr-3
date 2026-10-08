@@ -28,9 +28,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid report period" }, { status: 400 });
   }
 
-  const user = await getAuthenticatedUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const rangeEnd = endExclusive(end);
 
   const [
