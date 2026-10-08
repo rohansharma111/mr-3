@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { UserMenu } from "./components/user-menu";
 
 type Product = { id: string; name: string; molecule: string | null; category: string | null };
 
@@ -481,10 +482,7 @@ export default function Home() {
               ◉
               {unreadNotifications > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}
             </button>
-            <div className="border-l border-slate-200 pl-4">
-              <div className="text-sm font-bold text-slate-900">Amit Rawat</div>
-              <div className="text-xs text-slate-500">Territory Manager</div>
-            </div>
+            <UserMenu />
           </div>
         </header>
 
