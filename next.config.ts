@@ -12,11 +12,21 @@ const securityHeaders = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" }
 ];
 
+const apiHeaders = [
+  { key: "Cache-Control", value: "private, no-store, max-age=0" },
+  { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" }
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   async headers() {
     return [
+      {
+        source: "/api/:path*",
+        headers: [...securityHeaders, ...apiHeaders]
+      },
       {
         source: "/(.*)",
         headers: securityHeaders
