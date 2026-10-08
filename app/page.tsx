@@ -739,28 +739,37 @@ export default function Home() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="mr-topbar bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4 flex-1 max-w-2xl">
-            <button type="button" aria-label="Open navigation" aria-expanded={mobileNavOpen}
-              onClick={() => setMobileNavOpen(true)}
-              className="mr-menu-button h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900">☰</button>
-            <div className="hidden sm:block min-w-0 mr-section-heading">
-              <div className="text-sm font-black text-slate-900 truncate">{currentSection.title}</div>
-              <div className="text-[11px] text-slate-400 truncate">{currentSection.description}</div>
+        <header className="mr-topbar bg-white border-b border-slate-200 px-4 lg:px-6 shrink-0">
+          <div className="mr-header-inner">
+            <div className="mr-header-leading">
+              <button type="button" aria-label="Open navigation" aria-expanded={mobileNavOpen}
+                onClick={() => setMobileNavOpen(true)}
+                className="mr-menu-button h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900">☰</button>
+
+              <div className="mr-header-title min-w-0">
+                <div className="text-sm font-black text-slate-900 truncate">{currentSection.title}</div>
+                <div className="text-[11px] text-slate-400 truncate">{currentSection.description}</div>
+              </div>
+
+              <div className="mr-header-search relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
+                <input value={query} onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search doctor, specialty, brand or molecule..."
+                  aria-label="Search doctors, specialties, brands or molecules"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border border-transparent rounded-xl text-sm outline-none focus:bg-white focus:border-blue-500 transition-all" />
+              </div>
             </div>
-            <div className="relative flex-1">
-              <span className="absolute left-3.5 top-2.5 text-slate-400">⌕</span>
-              <input value={query} onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search doctor, specialty, brand or molecule..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-full text-sm outline-none focus:bg-white focus:border-blue-500 transition-all" />
+
+            <div className="mr-header-actions">
+              <button type="button" onClick={() => navigate("notifications")}
+                className="mr-header-notifications h-10 w-10 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-blue-600 relative text-lg"
+                aria-label="Notifications">
+                ◉
+                {unreadNotifications > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}
+              </button>
+              <div className="mr-header-divider" />
+              <UserMenu />
             </div>
-          </div>
-          <div className="flex items-center gap-5">
-            <button onClick={() => navigate("notifications")} className="h-10 w-10 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-blue-600 relative text-lg" aria-label="Notifications">
-              ◉
-              {unreadNotifications > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}
-            </button>
-            <UserMenu />
           </div>
         </header>
 
