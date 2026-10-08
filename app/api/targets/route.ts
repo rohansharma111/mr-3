@@ -3,7 +3,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 
-
 const targetSchema = z.object({
   periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -30,15 +29,16 @@ export async function GET(request: NextRequest) {
   const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const defaultEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
 
-  const start = parseDateOnly(params.get("from") || defaultStart.toISOString().slice(0, 10));
-  const end = parseDateOnly(params.get("to") || defaultEnd.toISOString().slice(0, 10));
+  const start = parseDateOnly(
+    params.get("from") || defaultStart.toISOString().slice(0, 10)
+  );
+  const end = parseDateOnly(
+    params.get("to") || defaultEnd.toISOString().slice(0, 10)
+  );
 
   if (!start || !end || start > end) {
     return NextResponse.json({ error: "Invalid target period" }, { status: 400 });
   }
-
-  const user = await getAuthenticatedUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const target = await prisma.target.findFirst({
     where: { userId: user.id, periodStart: start, periodEnd: end }
@@ -67,12 +67,14 @@ export async function GET(request: NextRequest) {
       start: start.toISOString().slice(0, 10),
       end: end.toISOString().slice(0, 10)
     },
-    target: target ? {
-      id: target.id,
-      targetCalls: target.targetCalls,
-      targetSamples: target.targetSamples,
-      targetConversions: target.targetConversions
-    } : null,
+    target: target
+      ? {
+          id: target.id,
+          targetCalls: target.targetCalls,
+          targetSamples: target.targetSamples,
+          targetConversions: target.targetConversions
+        }
+      : null,
     actual: {
       completedCalls,
       sampleUnits: sampleUnits._sum.quantity ?? 0,
@@ -88,24 +90,29 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const parsed = targetSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid target", details: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid target", details: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
 
   const start = parseDateOnly(parsed.data.periodStart);
   const end = parseDateOnly(parsed.data.periodEnd);
+
   if (!start || !end || start > end) {
     return NextResponse.json({ error: "Target period is invalid" }, { status: 400 });
   }
 
   const maxPeriodEnd = new Date(start.getTime() + 366 * 24 * 60 * 60 * 1000);
   if (end > maxPeriodEnd) {
-    return NextResponse.json({ error: "Target period cannot exceed one year" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Target period cannot exceed one year" },
+      { status: 400 }
+    );
   }
 
-  const user = await prisma.user.findUnique({ where: { email: demoUserEmail } });
-  if (!user || !user.isActive) {
-    return NextResponse.json({ error: "Active user not configured" }, { status: 500 });
-  }
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const target = await prisma.$transaction(async (tx) => {
     const existing = await tx.target.findFirst({
@@ -168,5 +175,5 @@ export async function POST(request: NextRequest) {
     targetCalls: target.targetCalls,
     targetSamples: target.targetSamples,
     targetConversions: target.targetConversions
-  }, { status: 200 });
+  });
 }
