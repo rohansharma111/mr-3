@@ -188,3 +188,23 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     font-size: 12px;
   }
 }
+
+
+@media (max-width: 767px) {
+  .mr-main-content > section {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mr-main-content .grid {
+    min-width: 0;
+  }
+
+  .mr-main-content .grid > * {
+    min-width: 0;
+  }
+
+  .mr-main-content .mr-mobile-doctor-cards {
+    overflow: hidden;
+  }
+}
