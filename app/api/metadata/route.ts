@@ -13,7 +13,7 @@ export async function GET() {
       select: {
         id: true,
         name: true,
-        doctorPatches: {
+        doctors: {
           where: { doctor: { isActive: true } },
           select: { doctorId: true }
         }
@@ -30,7 +30,7 @@ export async function GET() {
     patches: patches.map((patch) => ({
       id: patch.id,
       name: patch.name,
-      doctorCount: patch.doctorPatches.length
+      doctorCount: patch.doctors.length
     })),
     specialties: specialties.map((specialty) => ({
       id: specialty.id,
