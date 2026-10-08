@@ -103,3 +103,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .mr-mobile-record-cards { display: grid; gap: 10px; }
   .mr-main-content .mr-mobile-record-cards button { min-height: 0; }
 }
+
+@media (max-width: 767px) {
+  .mr-stockist-desktop { display: none; }
+  .mr-stockist-mobile { display: grid; gap: 10px; }
+}
+@media (min-width: 768px) {
+  .mr-stockist-mobile { display: none; }
+}
