@@ -320,3 +320,8 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Hardened Calls history with explicit status validation and made the validated status filter actually constrain the database query.
 - No database schema or business-data changes were made.
 \n
+## Mutation concurrency hardening milestone
+- Plan creation now handles the database unique-constraint race explicitly and returns a controlled HTTP 409 instead of leaking a database exception when concurrent requests create the same user/doctor/time plan.
+- No schema or data changes were made in this increment; the existing plan uniqueness constraint is now surfaced safely at the API boundary.
+- Unexpected plan-creation failures return a sanitized server error without exposing database details.
+\n
