@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth-user";
 
-const demoUserEmail = "amit.rawat@mr3.demo";
 
 export async function GET(request: NextRequest) {
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const params = new URL(request.url).searchParams;
   const unreadOnly = params.get("unread") === "true";
 
-  const user = await prisma.user.findUnique({ where: { email: demoUserEmail } });
-  if (!user || !user.isActive) {
-    return NextResponse.json({ error: "Active user not configured" }, { status: 500 });
-  }
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [notifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({
