@@ -82,12 +82,20 @@ Important source-derived demo values:
 - Reports and Notifications are now implemented.
 - Some prototype KPI and profile values remain hardcoded because their underlying domain/analytics models have not yet been fully implemented.
 
+## Explorer coordinate model milestone
+
+- Added dedicated `doctors.map_x` / `doctors.map_y` columns for the prototype's source-backed map positions.
+- The development database migration `20261008160000_add_doctor_map_coordinates` was applied to Neon branch `br-wandering-pond-b4wjpdlk` and copied the existing demo source positions from the temporary latitude/longitude fields into the dedicated columns.
+- `GET /api/doctors` now reads only `map_x` / `map_y` for the UI `coords` object.
+- The Prisma schema and repeatable seed now represent these values explicitly as UI map coordinates rather than geographic GPS.
+- The legacy latitude/longitude values were retained unchanged to avoid destructive data mutation; application code no longer treats them as map coordinates.
+
 ## Immediate next steps
 1. Run a full local/Vercel build validation against the current development branch; the connected environment cannot currently execute a networked npm install/build.
 2. Verify the seed path after the Prisma field-to-column mapping alignment.
 3. Move subsequent implementation work onto the GitHub `development` branch.
 3. Add API/database-driven patch and specialty metadata instead of hardcoded filter arrays.
-4. Complete the Explorer data model: coordinates, writing-pattern analytics and source-backed map positions.
+4. Complete the Explorer data model: writing-pattern analytics and source-backed doctor profile data.
 5. Expand doctor profile tabs beyond the current Overview shell; call history is now persisted and visible.
 6. Implement Reports and Notifications; My Calls, My Plan, Samples and Targets are now functional.
 7. Continue role-specific permission enforcement only where product requirements define clear management/admin boundaries.
