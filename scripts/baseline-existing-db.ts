@@ -31,12 +31,26 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is required.");
 }
 
-const prismaCli = resolve(process.cwd(), "node_modules", "prisma", "build", "index.js");
+const prismaCli = resolve(
+  process.cwd(),
+  "node_modules",
+  "prisma",
+  "build",
+  "index.js"
+);
 if (!existsSync(prismaCli)) {
-  throw new Error("Prisma CLI was not found at node_modules/prisma/build/index.js. Run npm install first.");
+  throw new Error(
+    "Prisma CLI was not found at node_modules/prisma/build/index.js. Run npm install first."
+  );
 }
 
-function runPrisma(args: string[], options?: { encoding?: "utf8"; stdio?: "inherit" | ["ignore", "pipe", "pipe"] }) {
+function runPrisma(
+  args: string[],
+  options?: {
+    encoding?: "utf8";
+    stdio?: "inherit" | ["ignore", "pipe", "pipe"];
+  }
+) {
   return execFileSync(process.execPath, [prismaCli, ...args], {
     encoding: options?.encoding,
     stdio: options?.stdio ?? "inherit"
@@ -62,6 +76,7 @@ async function main() {
         "migrate",
         "diff",
         "--from-schema-datasource",
+        "prisma/schema.prisma",
         "--to-schema-datamodel",
         "prisma/schema.prisma",
         "--script"
