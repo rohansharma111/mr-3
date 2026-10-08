@@ -54,6 +54,53 @@ type Doctor = {
   coords: { x: number; y: number } | null;
 };
 
+type DoctorProfile = {
+  doctor: {
+    id: string;
+    name: string;
+    specialty: { id: string; name: string } | null;
+    clinic: string;
+    location: string;
+    score: number;
+    potential: string;
+    distanceKm: string | null;
+    mapCoordinates: { x: number; y: number } | null;
+    patches: { id: string; name: string; doctorCount: number }[];
+  };
+  activity: {
+    completedCalls: number;
+    totalCalls: number;
+    issuedSampleUnits: number;
+    sampleIssues: number;
+    plans: number;
+    lastActivity: string | null;
+  };
+  calls: {
+    id: string;
+    status: string;
+    outcome: string | null;
+    notes: string | null;
+    calledAt: string;
+    product: { id: string; name: string; molecule: string | null } | null;
+  }[];
+  samples: {
+    id: string;
+    quantity: number;
+    status: string;
+    issuedAt: string;
+    product: { id: string; name: string; molecule: string | null } | null;
+  }[];
+  plans: {
+    id: string;
+    plannedFor: string;
+    priority: string;
+    objective: string;
+    status: string;
+    notes: string;
+  }[];
+  writingPattern: WritingPattern | null;
+};
+
 type AiMessage = {
   role: "user" | "assistant";
   content: string;
@@ -107,6 +154,10 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selected, setSelected] = useState<Doctor | null>(null);
+  const [doctorProfile, setDoctorProfile] = useState<DoctorProfile | null>(null);
+  const [doctorProfileLoading, setDoctorProfileLoading] = useState(false);
+  const [doctorProfileError, setDoctorProfileError] = useState("");
+  const [doctorProfileTab, setDoctorProfileTab] = useState<"Overview" | "Prescribing" | "History" | "Insights">("Overview");
   const [period, setPeriod] = useState<"This Month" | "Last 3 Months">("Last 3 Months");
   const [writingPattern, setWritingPattern] = useState<WritingPattern | null>(null);
   const [loading, setLoading] = useState(true);
@@ -232,6 +283,45 @@ export default function Home() {
       .then((data: DashboardSummary) => setDashboardSummary(data))
       .catch(() => setDashboardSummary(null));
   }, []);
+
+  useEffect(() => {
+    if (!selectedDoctor) {
+      setDoctorProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+    setDoctorProfileLoading(true);
+    setDoctorProfileError("");
+
+    fetch("/api/doctors/" + selectedDoctor.id + "/profile", { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.error || "Unable to load doctor profile");
+        return data as DoctorProfile;
+      })
+      .then((data) => {
+        if (!cancelled) setDoctorProfile(data);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setDoctorProfile(null);
+          setDoctorProfileError(error instanceof Error ? error.message : "Unable to load doctor profile");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDoctorProfileLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDoctor]);
+
+  useEffect(() => {
+    if (!selectedDoctor) return;
+    setDoctorProfileTab("Overview");
+  }, [selectedDoctor?.id]);
 
   useEffect(() => {
     fetch("/api/products", { cache: "no-store" })
@@ -691,12 +781,208 @@ export default function Home() {
 
           {section === "potential" && selectedDoctor && (
             <section className="space-y-6">
-              <div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2><p className="text-sm text-slate-500">Detailed performance & prescribing insights</p></div><div className="flex gap-2"><div className="flex gap-2"><button onClick={() => openPlanDialog(selectedDoctor)} className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button><button onClick={() => openSampleDialog(selectedDoctor)} className="bg-white border border-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">□ Issue Samples</button></div><button onClick={() => { setCallMessage(""); setCallNotes(""); setCallOpen(true); }} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button></div></div>
-              <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 rounded-2xl shadow-md"><h3 className="text-xl font-black">{selectedDoctor.name}<span className="ml-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] uppercase font-bold px-2 py-1 rounded-full">{selectedDoctor.potential} Potential</span></h3><p className="text-blue-200 text-sm mt-1">{selectedDoctor.spec} · {selectedDoctor.clinic}</p><p className="text-xs text-slate-300 mt-2">📍 {selectedDoctor.loc} · {selectedDoctor.dist}</p></div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2>
+                  <p className="text-sm text-slate-500">Detailed performance & prescribing insights</p>
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex gap-2">
+                    <button onClick={() => openPlanDialog(selectedDoctor)} className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button>
+                    <button onClick={() => openSampleDialog(selectedDoctor)} className="bg-white border border-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">□ Issue Samples</button>
+                  </div>
+                  <button onClick={() => { setCallMessage(""); setCallNotes(""); setCallOpen(true); }} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 rounded-2xl shadow-md">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                  <div>
+                    <h3 className="text-xl font-black">{selectedDoctor.name}
+                      <span className="ml-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] uppercase font-bold px-2 py-1 rounded-full">{selectedDoctor.potential} Potential</span>
+                    </h3>
+                    <p className="text-blue-200 text-sm mt-1">{selectedDoctor.spec} · {selectedDoctor.clinic}</p>
+                    <p className="text-xs text-slate-300 mt-2">📍 {selectedDoctor.loc} · {selectedDoctor.dist}</p>
+                  </div>
+                  <div className="text-xs text-blue-200">
+                    {doctorProfile?.doctor.patches.length ? doctorProfile.doctor.patches.map((item) => item.name).join(" · ") : "Patch membership unavailable"}
+                  </div>
+                </div>
+              </div>
+
+              {doctorProfileLoading && (
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 text-sm text-slate-500 shadow-sm">Loading persisted doctor activity…</div>
+              )}
+
+              {doctorProfileError && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">{doctorProfileError}</div>
+              )}
+
               <div className="grid xl:grid-cols-12 gap-5">
-                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex gap-5 border-b border-slate-100 pb-4 mb-5"><button className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-3 text-sm">Overview</button><button className="text-slate-500 text-sm pb-3">Prescribing</button><button className="text-slate-500 text-sm pb-3">History</button><button className="text-slate-500 text-sm pb-3">Insights</button></div><div className="grid grid-cols-3 gap-3">{[["Potential Score",selectedDoctor.score+"/100"],["Monthly Scripts","Not tracked"],["Conversion","Not tracked"]].map(([a,b])=><div key={a} className="bg-slate-50 rounded-xl p-4"><div className="text-xs uppercase tracking-wider text-slate-400">{a}</div><div className="text-2xl font-black mt-1">{b}</div></div>)}</div><div className="mt-5 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900"><b>🎯 Next Best Action</b><p className="mt-1">Not available from the current persisted activity model.</p></div>
-                  <div className="mt-5 border-t border-slate-100 pt-5"><div className="flex items-center justify-between mb-3"><h4 className="font-bold text-sm">Recent Call History</h4><button onClick={()=>setSection("calls")} className="text-xs text-blue-600 font-bold">View all →</button></div>{callHistory.filter(call=>call.doctorId===selectedDoctor.id).slice(0,3).map(call=><div key={call.id} className="border border-slate-100 rounded-xl p-3 mb-2"><div className="flex justify-between gap-3"><span className="text-xs font-bold text-slate-800">{call.outcome}</span><span className="text-[10px] text-slate-400">{new Date(call.calledAt).toLocaleDateString()}</span></div><div className="text-xs text-slate-500 mt-1">{call.notes||"No notes recorded"}{call.productName?" · "+call.productName:""}</div></div>)}{callHistory.filter(call=>call.doctorId===selectedDoctor.id).length===0&&<p className="text-xs text-slate-400">Open My Calls to load this doctor’s recorded history.</p>}</div></div>
-                <div className="xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex justify-between border-b border-slate-100 pb-3"><h3 className="font-bold">Doctor Availability</h3><span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-bold">Not tracked</span></div><div className="bg-blue-50 border border-blue-100 p-3.5 rounded-xl mt-4"><div className="text-xs uppercase text-blue-700 font-bold">Best Time to Visit</div><div className="text-base font-black text-blue-900 mt-1">Not available</div><div className="text-xs text-blue-700">Schedule data is not persisted yet.</div></div><div className="border-t border-slate-100 mt-4 pt-4"><h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Primary Chemist Link</h4><div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-500">Stockist relationships are available in Stockist Data; a doctor-to-chemist relationship is not currently modeled.</div></div></div>
+                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                  <div className="flex gap-5 border-b border-slate-100 pb-4 mb-5 overflow-x-auto">
+                    {(["Overview", "Prescribing", "History", "Insights"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setDoctorProfileTab(tab)}
+                        className={(doctorProfileTab === tab ? "text-blue-600 font-semibold border-b-2 border-blue-600" : "text-slate-500") + " pb-3 text-sm whitespace-nowrap"}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {doctorProfileTab === "Overview" && (
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {[
+                          ["Potential Score", selectedDoctor.score + "/100"],
+                          ["Completed Calls", String(doctorProfile?.activity.completedCalls ?? 0)],
+                          ["Sample Units", String(doctorProfile?.activity.issuedSampleUnits ?? 0)],
+                          ["Planned Visits", String(doctorProfile?.activity.plans ?? 0)]
+                        ].map(([label, value]) => (
+                          <div key={label} className="bg-slate-50 rounded-xl p-4">
+                            <div className="text-xs uppercase tracking-wider text-slate-400">{label}</div>
+                            <div className="text-2xl font-black mt-1">{value}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-5 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900">
+                        <b>🎯 Next Best Action</b>
+                        <p className="mt-1">No next-best-action rule is currently persisted. Use the recorded calls, samples and plan activity below for field execution.</p>
+                      </div>
+
+                      <div className="mt-5 border-t border-slate-100 pt-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-bold text-sm">Recent Call History</h4>
+                          <button onClick={() => setSection("calls")} className="text-xs text-blue-600 font-bold">View all →</button>
+                        </div>
+                        {doctorProfile?.calls.slice(0, 3).map((call) => (
+                          <div key={call.id} className="border border-slate-100 rounded-xl p-3 mb-2">
+                            <div className="flex justify-between gap-3">
+                              <span className="text-xs font-bold text-slate-800">{call.outcome || "No outcome recorded"}</span>
+                              <span className="text-[10px] text-slate-400">{new Date(call.calledAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="text-xs text-slate-500 mt-1">{call.notes || "No notes recorded"}{call.product?.name ? " · " + call.product.name : ""}</div>
+                          </div>
+                        ))}
+                        {!doctorProfileLoading && (doctorProfile?.calls.length ?? 0) === 0 && <p className="text-xs text-slate-400">No calls recorded for this doctor by the current user.</p>}
+                      </div>
+                    </>
+                  )}
+
+                  {doctorProfileTab === "Prescribing" && (
+                    <div className="space-y-4">
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+                        <b>Prototype-source analytics</b>
+                        <p className="mt-1">The following writing-pattern data comes from the supplied prototype and is not doctor-specific. It must not be interpreted as this doctor's prescribing history.</p>
+                      </div>
+                      {doctorProfile?.writingPattern ? (
+                        <>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="border border-slate-100 rounded-xl p-4">
+                              <h4 className="font-bold text-sm mb-3">Categories — {doctorProfile.writingPattern.period}</h4>
+                              <div className="space-y-2 text-xs">
+                                {doctorProfile.writingPattern.categories.map(([name, share]) => (
+                                  <div key={name} className="flex justify-between border-b border-slate-100 py-1"><span>{name}</span><b>{share}%</b></div>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="border border-slate-100 rounded-xl p-4">
+                              <h4 className="font-bold text-sm mb-3">Top Molecules</h4>
+                              <div className="space-y-2 text-xs">
+                                {doctorProfile.writingPattern.molecules.map(([name, share]) => (
+                                  <div key={name} className="flex justify-between border-b border-slate-100 py-1"><span>{name}</span><b>{share}</b></div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs text-blue-900">{doctorProfile.writingPattern.insight}</div>
+                        </>
+                      ) : (
+                        <p className="text-sm text-slate-500">No prototype writing-pattern snapshot is available.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {doctorProfileTab === "History" && (
+                    <div className="space-y-5">
+                      <div>
+                        <h4 className="font-bold text-sm mb-3">Calls</h4>
+                        {doctorProfile?.calls.map((call) => (
+                          <div key={call.id} className="border border-slate-100 rounded-xl p-3 mb-2 text-xs">
+                            <div className="flex justify-between"><b>{call.status}</b><span className="text-slate-400">{new Date(call.calledAt).toLocaleString()}</span></div>
+                            <div className="text-slate-600 mt-1">{call.outcome || "No outcome recorded"}{call.product?.name ? " · " + call.product.name : ""}</div>
+                            {call.notes && <div className="text-slate-500 mt-1">{call.notes}</div>}
+                          </div>
+                        ))}
+                        {!doctorProfileLoading && (doctorProfile?.calls.length ?? 0) === 0 && <p className="text-xs text-slate-400">No call history recorded.</p>}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm mb-3">Samples</h4>
+                        {doctorProfile?.samples.map((sample) => (
+                          <div key={sample.id} className="border border-slate-100 rounded-xl p-3 mb-2 text-xs flex justify-between gap-3">
+                            <div><b>{sample.product?.name || "Product not recorded"}</b><div className="text-slate-500 mt-1">{sample.quantity} units · {sample.status}</div></div>
+                            <span className="text-slate-400">{new Date(sample.issuedAt).toLocaleDateString()}</span>
+                          </div>
+                        ))}
+                        {!doctorProfileLoading && (doctorProfile?.samples.length ?? 0) === 0 && <p className="text-xs text-slate-400">No sample issues recorded.</p>}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm mb-3">Plans</h4>
+                        {doctorProfile?.plans.map((plan) => (
+                          <div key={plan.id} className="border border-slate-100 rounded-xl p-3 mb-2 text-xs">
+                            <div className="flex justify-between"><b>{plan.status}</b><span className="text-slate-400">{new Date(plan.plannedFor).toLocaleString()}</span></div>
+                            <div className="text-slate-600 mt-1">{plan.priority} · {plan.objective || "Field visit"}</div>
+                            {plan.notes && <div className="text-slate-500 mt-1">{plan.notes}</div>}
+                          </div>
+                        ))}
+                        {!doctorProfileLoading && (doctorProfile?.plans.length ?? 0) === 0 && <p className="text-xs text-slate-400">No plans recorded.</p>}
+                      </div>
+                    </div>
+                  )}
+
+                  {doctorProfileTab === "Insights" && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {[
+                          ["Total Calls", String(doctorProfile?.activity.totalCalls ?? 0)],
+                          ["Sample Issues", String(doctorProfile?.activity.sampleIssues ?? 0)],
+                          ["Issued Units", String(doctorProfile?.activity.issuedSampleUnits ?? 0)]
+                        ].map(([label, value]) => (
+                          <div key={label} className="bg-slate-50 rounded-xl p-4">
+                            <div className="text-xs uppercase tracking-wider text-slate-400">{label}</div>
+                            <div className="text-2xl font-black mt-1">{value}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-900">
+                        <b>Persisted activity signal</b>
+                        <p className="mt-1">{doctorProfile?.activity.lastActivity ? "Last recorded activity: " + new Date(doctorProfile.activity.lastActivity).toLocaleString() + "." : "No persisted activity is available for this doctor."}</p>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600">
+                        Conversion, doctor availability and doctor-to-chemist relationships are not modeled in the current database, so no live claim is displayed for them.
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                  <div className="flex justify-between border-b border-slate-100 pb-3">
+                    <h3 className="font-bold">Doctor Availability</h3>
+                    <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-bold">Not tracked</span>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-100 p-3.5 rounded-xl mt-4">
+                    <div className="text-xs uppercase text-blue-700 font-bold">Best Time to Visit</div>
+                    <div className="text-base font-black text-blue-900 mt-1">Not available</div>
+                    <div className="text-xs text-blue-700">Schedule data is not persisted yet.</div>
+                  </div>
+                  <div className="border-t border-slate-100 mt-4 pt-4">
+                    <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Primary Chemist Link</h4>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-500">Stockist relationships are available in Stockist Data; a doctor-to-chemist relationship is not currently modeled.</div>
+                  </div>
+                </div>
               </div>
             </section>
           )}
