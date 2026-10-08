@@ -79,7 +79,8 @@ export async function PATCH(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (parsed.data.markAllRead) {
+  try {
+    if (parsed.data.markAllRead) {
     await prisma.notification.updateMany({
       where: { userId: user.id, isRead: false },
       data: { isRead: true }
@@ -103,4 +104,7 @@ export async function PATCH(request: NextRequest) {
   });
 
   return NextResponse.json({ unreadCount });
+  } catch {
+    return NextResponse.json({ error: "Unable to update notifications" }, { status: 500 });
+  }
 }
