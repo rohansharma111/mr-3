@@ -19,7 +19,7 @@ The supplied file ai_studio_code (1).html is the visual/product reference. It is
 - Default branch: main
 - develop branch exists.
 - Foundation, database schema, doctor API, seed, database-backed UI and persistent call workflow are committed on main.
-- A fresh `development` GitHub branch has been created from the current main state; use it for subsequent implementation work.
+- `development` is the active implementation branch. It is promoted to `main` only at stable milestones.
 - The current UI is a first production-oriented React conversion and is being expanded incrementally.
 
 ### Neon
@@ -91,7 +91,7 @@ Important source-derived demo values:
 5. Expand doctor profile tabs beyond the current Overview shell; call history is now persisted and visible.
 6. Implement Reports and Notifications; My Calls, My Plan, Samples and Targets are now functional.
 7. Continue role-specific permission enforcement only where product requirements define clear management/admin boundaries.
-8. Apply the committed rate-limit migration to the development Neon branch, then validate AI Support end-to-end.
+8. Validate the applied rate-limit migration and AI Support end-to-end once server AI credentials are configured.
 9. Add robust validation, error handling, audit logging, indexes, tests and observability.
 10. Configure development/staging/production environment variables and deployment; keep Vercel automatic Git deployments disabled.
 
@@ -178,6 +178,19 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - The AI Support UI now sends real requests, supports the prototype prompt chips, shows loading/errors and labels responses as grounded in MR 3.0 operational data.
 - OPENAI_API_KEY, OPENAI_MODEL and optional OPENAI_BASE_URL are documented in .env.example.
 - The AI feature intentionally returns a clear configuration error when no server-side API key is configured; it does not simulate a live model.
+
+## Explorer metadata milestone
+
+- Added authenticated `GET /api/metadata` for database-backed patch and specialty metadata.
+- Replaced the Explorer UI's hardcoded patch list and specialty list with metadata loaded from Neon.
+- Patch display counts use the persisted `patches.doctor_count` values from the source-derived demo dataset.
+- The Explorer keeps the existing prototype labels and visual structure while removing those filter metadata constants from the client.
+
+## Rate-limit migration milestone
+
+- Applied `prisma/migrations/20261008150000_add_rate_limit_buckets/migration.sql` to the Neon development branch `br-wandering-pond-b4wjpdlk`.
+- Verified `public.rate_limit_buckets` exists with its primary key and expiry index.
+- Production Neon was not modified.
 
 ## Stockist milestone
 
