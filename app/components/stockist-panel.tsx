@@ -142,7 +142,7 @@ export function StockistPanel() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="mr-stockist-desktop overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-xs text-slate-500 uppercase">
                   <tr>
@@ -158,19 +158,36 @@ export function StockistPanel() {
                     <tr key={row.stockistId + row.productId} className="border-t border-slate-100">
                       <td className="p-3 font-bold">{row.stockistName}</td>
                       <td className="p-3">{row.location}</td>
-                      <td className="p-3 font-mono">
-                        {row.quantity} {row.unit}
-                      </td>
+                      <td className="p-3 font-mono">{row.quantity} {row.unit}</td>
                       <td className="p-3 text-slate-500">{relativeTime(row.updatedAt)}</td>
-                      <td className="p-3">
-                        <span className={statusClasses(row.status) + " text-xs font-bold px-2.5 py-1 rounded-full"}>
-                          {row.status}
-                        </span>
-                      </td>
+                      <td className="p-3"><span className={statusClasses(row.status) + " text-xs font-bold px-2.5 py-1 rounded-full"}>{row.status}</span></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="mr-stockist-mobile">
+              {data?.stockists.map(row => (
+                <article key={row.stockistId + row.productId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-black text-slate-900 truncate">{row.stockistName}</div>
+                      <div className="text-xs text-slate-500 mt-1">{row.location}</div>
+                    </div>
+                    <span className={statusClasses(row.status) + " shrink-0 text-[11px] font-black px-2.5 py-1 rounded-lg"}>{row.status}</span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-white border border-slate-200 p-3">
+                      <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Quantity</div>
+                      <div className="font-mono font-black text-slate-900 mt-1">{row.quantity} {row.unit}</div>
+                    </div>
+                    <div className="rounded-xl bg-white border border-slate-200 p-3">
+                      <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Updated</div>
+                      <div className="text-xs font-semibold text-slate-700 mt-1">{relativeTime(row.updatedAt)}</div>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
           </div>
         </>
