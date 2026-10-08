@@ -340,3 +340,5 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Added a safe request-correlation helper that accepts only bounded opaque request IDs or generates a UUID.
 - AI Support responses expose X-Request-ID and audit metadata records the correlation ID without storing the question text or operational context.
 - The correlation ID is not used as authentication and no PHI, credentials, prompts, or database payloads are logged.
+
+- Request correlation IDs are now attached at the proxy boundary for API and page responses, including redirects; API route authentication remains enforced by each route.
