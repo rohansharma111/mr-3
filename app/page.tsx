@@ -796,7 +796,10 @@ export default function Home() {
                   aria-expanded={notificationOpen}
                   aria-haspopup="dialog"
                 >
-                  <span className="mr-bell-icon" aria-hidden="true">♢</span>
+                  <svg className="mr-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                    <path d="M10 21h4" />
+                  </svg>
                   {unreadNotifications > 0 && (
                     <span className="mr-notification-badge">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>
                   )}
