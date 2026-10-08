@@ -229,6 +229,14 @@ Important source-derived demo values:
 - The existing prototype visual language and actions (Add to Plan, Issue Samples, Log Call) were preserved.
 - No new business facts or unsupported KPIs were introduced.
 
+## API query-validation hardening milestone
+
+- Hardened the authenticated Calls, Samples and Plans read endpoints against malformed query parameters.
+- Invalid doctor UUID filters now return controlled HTTP 400 responses instead of reaching Prisma with invalid identifiers.
+- Invalid sample/plan status filters now return controlled HTTP 400 responses.
+- Invalid or reversed plan date ranges now return controlled HTTP 400 responses.
+- No database schema or business behavior was changed by this increment.
+
 ## Validation status
 - Neon development schema/data checks have been performed through the connected Neon integration.
 - GitHub source/tree checks have been performed.
