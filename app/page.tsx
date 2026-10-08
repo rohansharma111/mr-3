@@ -51,6 +51,7 @@ type Doctor = {
   score: number;
   potential: "High" | "Medium" | "Low";
   dist: string;
+  coords: { x: number; y: number } | null;
 };
 
 type AiMessage = {
@@ -75,18 +76,7 @@ const formatLocalDate = (date: Date) => {
   return year + "-" + month + "-" + day;
 };
 
-const writingPatterns = {
-  "This Month": {
-    categories: [["Pain Relievers",45],["Antibiotics",20],["Gastro Medicines",16],["Vitamins / Supplements",12],["Others",7]],
-    molecules: [["Aceclofenac + Paracetamol","30%"],["Paracetamol","15%"],["Etoricoxib","11%"],["Amoxicillin + Clavulanate","9%"],["Pantoprazole","8%"],["Vitamin D3","6%"],["Others","21%"]],
-    insight: "Pain Relievers jumped to 45% this month due to seasonal joint flare-ups."
-  },
-  "Last 3 Months": {
-    categories: [["Pain Relievers",42],["Antibiotics",22],["Gastro Medicines",15],["Vitamins / Supplements",12],["Others",9]],
-    molecules: [["Aceclofenac + Paracetamol","28%"],["Paracetamol","14%"],["Etoricoxib","12%"],["Amoxicillin + Clavulanate","10%"],["Pantoprazole","8%"],["Vitamin D3","5%"],["Others","23%"]],
-    insight: "Doctor prescribes Pain Relievers most frequently (42%). Focus on Pain Management products."
-  }
-} as const;
+;
 
 export default function Home() {
   const [section, setSection] = useState("explorer");
@@ -514,11 +504,16 @@ export default function Home() {
   const writing = writingPatterns[period];
   const selectedDoctor = selected ?? doctors[0] ?? null;
 
-  const mapPoints = useMemo(() => doctors.map((doctor, index) => ({
-    doctor,
-    left: 10 + ((index * 17) % 78),
-    top: 15 + ((index * 23) % 68)
-  })), [doctors]);
+  const mapPoints = useMemo(
+    () => doctors
+      .filter((doctor) => doctor.coords !== null)
+      .map((doctor) => ({
+        doctor,
+        left: doctor.coords?.x ?? 0,
+        top: doctor.coords?.y ?? 0
+      })),
+    [doctors]
+  );
 
   return (
     <div className="h-screen overflow-hidden flex bg-slate-50">
@@ -628,7 +623,7 @@ export default function Home() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-800">📍 Doctor Location Map — {patch}</h3><span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Live GPS Simulation</span></div>
+                    <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-800">📍 Doctor Location Map — {patch}</h3><span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Source-backed demo coordinates</span></div>
                     <div className="relative h-64 bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
                       <div className="absolute inset-0 opacity-20" style={{backgroundImage:"radial-gradient(#60a5fa 1px, transparent 1px)",backgroundSize:"24px 24px"}} />
                       {mapPoints.map(({doctor,left,top}) => <button key={doctor.id} onClick={() => {setSelected(doctor);setSection("potential");}} style={{left:left+"%",top:top+"%"}}
