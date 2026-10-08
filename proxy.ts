@@ -2,6 +2,16 @@ import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { getRequestId, requestIdHeaders } from "@/lib/request-id";
 
+function isSameOriginMutation(request: Request) {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+  try {
+    return new URL(origin).origin === new URL(request.url).origin;
+  } catch {
+    return false;
+  }
+}
+
 export default auth((request) => {
   const requestId = getRequestId(request);
   const isApiRequest = request.nextUrl.pathname.startsWith("/api/");
@@ -9,6 +19,19 @@ export default auth((request) => {
   const isLoginPage = request.nextUrl.pathname === "/login";
 
   if (isApiRequest) {
+    const isAuthRoute = request.nextUrl.pathname.startsWith("/api/auth/");
+    const isMutation = request.method !== "GET" && request.method !== "HEAD" && request.method !== "OPTIONS";
+
+    if (isMutation && !isAuthRoute && !isSameOriginMutation(request)) {
+      return NextResponse.json(
+        { error: "Cross-origin request blocked", requestId },
+        {
+          status: 403,
+          headers: requestIdHeaders(requestId)
+        }
+      );
+    }
+
     const response = NextResponse.next();
     response.headers.set("X-Request-ID", requestId);
     return response;
