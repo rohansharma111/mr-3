@@ -193,6 +193,7 @@ model Target {
   targetSamples    Int      @default(0) @map("target_samples")
   targetConversions Int     @default(0) @map("target_conversions")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@unique([userId, periodStart, periodEnd])
   @@index([userId, periodStart, periodEnd])
   @@map("targets")
 }
