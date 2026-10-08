@@ -303,3 +303,9 @@ When implementing prototype behavior, use the supplied HTML as the source of tru
 
 ## Continuation prompt
 Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_STATE.md. You have GitHub access to rohansharma111/mr-3 and Neon project raspy-sea-44517117. First inspect the current GitHub files and development database before changing anything. Treat ai_studio_code (1).html as the visual/product source of truth. Do not restart or redesign from scratch. Continue from the Immediate next steps in PROJECT_STATE.md, verify the previous implementation, then implement the next production-grade increment. Keep development isolated from Neon production, never commit secrets, preserve the prototype UI, and update PROJECT_STATE.md after meaningful milestones.
+## API cache/privacy hardening milestone
+- Added explicit response headers for all `/api/:path*` routes: `Cache-Control: private, no-store, max-age=0`, `X-Robots-Tag: noindex, nofollow, noarchive`, and `Cross-Origin-Resource-Policy: same-origin`.
+- API routes retain the existing security header set while ensuring authenticated operational data is not intentionally cached or indexed by compliant intermediaries/crawlers.
+- No database schema or business behavior changed in this increment.
+- This is a defense-in-depth measure; local typecheck/build validation is still pending.
+
