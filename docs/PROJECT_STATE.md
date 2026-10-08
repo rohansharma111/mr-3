@@ -106,6 +106,15 @@ Important source-derived demo values:
 - The API explicitly returns `doctorSpecific: false`: the supplied prototype does not provide enough underlying event data to claim these percentages are individual-doctor prescribing analytics.
 - Seed data upserts the same source snapshots for repeatable development setup.
 
+## Doctor profile API milestone
+
+- Added authenticated `GET /api/doctors/[id]/profile`.
+- The route returns the selected doctor's persisted profile fields, specialty and patch membership, plus user-scoped recent calls, sample issues and plans.
+- It calculates only activity metrics that can be derived from persisted records: completed calls, total calls, issued sample units, sample issue count, plan count and last activity.
+- It also exposes the existing Last 3 Months writing-pattern snapshot while explicitly preserving `doctorSpecific: false`.
+- No unsupported schedule, chemist, conversion or prescribing claims were added.
+- This establishes the server-side data contract for expanding the Doctor Potential tabs without embedding demo-only business claims in the client.
+
 ## Profile-data integrity milestone
 - Removed unsupported hardcoded Monthly Scripts, Conversion, Next Best Action, verified schedule, and doctor-to-chemist claims from the deep profile.
 - These fields now explicitly show unavailable/not tracked until corresponding persisted domain data exists.
@@ -209,7 +218,7 @@ Important source-derived demo values:
 2. Run `npm run db:baseline-dev` locally with `DATABASE_URL` pointing only to Neon development, `MR3_DATABASE_ENV=development`, and `MR3_MIGRATION_BASELINE_CONFIRM=I_UNDERSTAND_BASELINE_EXISTING_DEV_DATABASE`. Stop if the Prisma schema diff is non-empty.
 3. Run `npx prisma migrate status` after baselining and confirm the repository migration history is recognized.
 4. Run `npm run build` locally and resolve any compile/type/runtime build issues before promotion.
-5. Continue the Explorer data model: expand doctor profile tabs using only persisted calls/samples/plans and clearly label prototype-source analytics as non-doctor-specific.
+5. Wire the new persisted doctor profile API into the Doctor Potential tabs, using only returned activity data and clearly labeling prototype-source analytics as non-doctor-specific.
 6. Continue role-specific permission enforcement only where product requirements define clear management/admin boundaries.
 7. Validate AI Support end-to-end once server AI credentials are configured.
 8. Add robust validation, error handling, audit logging, indexes, tests and observability.
