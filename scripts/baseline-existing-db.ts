@@ -61,105 +61,47 @@ const expectedMigrations = [
 ] as const;
 
 async function hasColumn(tableName: string, columnName: string) {
-  const rows = await prisma.$queryRaw<Array<{ exists: boolean }>>(
-    `SELECT EXISTS (
+  const rows = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+    SELECT EXISTS (
       SELECT 1
       FROM information_schema.columns
       WHERE table_schema = 'public'
         AND table_name = ${tableName}
         AND column_name = ${columnName}
-    ) AS exists`
-  );
+    ) AS exists
+  `;
   return rows[0]?.exists === true;
 }
 
 async function hasTable(tableName: string) {
-  const rows = await prisma.$queryRaw<Array<{ exists: boolean }>>(
-    `SELECT EXISTS (
+  const rows = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+    SELECT EXISTS (
       SELECT 1
       FROM information_schema.tables
       WHERE table_schema = 'public'
         AND table_name = ${tableName}
-    ) AS exists`
-  );
+    ) AS exists
+  `;
   return rows[0]?.exists === true;
 }
 
 async function hasIndex(indexName: string) {
-  const rows = await prisma.$queryRaw<Array<{ exists: boolean }>>(
-    `SELECT EXISTS (
+  const rows = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+    SELECT EXISTS (
       SELECT 1
       FROM pg_indexes
       WHERE schemaname = 'public'
         AND indexname = ${indexName}
-    ) AS exists`
-  );
+    ) AS exists
+  `;
   return rows[0]?.exists === true;
-}
-
-async function verifyMigrationEffects() {
-  const checks: Array<{
-    migration: string;
-    satisfied: boolean;
-    reason: string;
-  }> = [
-    {
-      migration: expectedMigrations[0],
-      satisfied: await hasColumn("app_users", "password_hash"),
-      reason: "app_users.password_hash exists"
-    },
-    {
-      migration: expectedMigrations[1],
-      satisfied:
-        (await hasTable("rate_limit_buckets")) &&
-        (await hasIndex("rate_limit_buckets_expires_at_idx")),
-      reason: "rate_limit_buckets table and expires_at index exist"
-    },
-    {
-      migration: expectedMigrations[2],
-      satisfied:
-        (await hasColumn("doctors", "map_x")) &&
-        (await hasColumn("doctors", "map_y")),
-      reason: "doctors.map_x and doctors.map_y exist"
-    },
-    {
-      migration: expectedMigrations[3],
-      satisfied:
-        (await hasTable("writing_pattern_snapshots")) &&
-        (await hasIndex("writing_pattern_snapshots_period_key")),
-      reason:
-        "writing_pattern_snapshots table and period unique index exist"
-    },
-    {
-      migration: expectedMigrations[4],
-      satisfied: await hasIndex(
-        "targets_user_id_period_start_period_end_key"
-      ),
-      reason: "targets period uniqueness index exists"
-    }
-  ];
-
-  const missing = checks.filter((check) => !check.satisfied);
-  if (missing.length > 0) {
-    const details = missing
-      .map((check) => `- ${check.migration}: ${check.reason}`)
-      .join("\n");
-    throw new Error(
-      "Refusing to baseline: one or more migration effects are missing from the existing database:\n" +
-        details
-    );
-  }
-
-  for (const check of checks) {
-    console.log("Verified migration effect: " + check.migration);
-  }
 }
 
 async function main() {
   try {
-    const ledger = await prisma.$queryRaw<Array<{ exists: boolean }>>(
-      "SELECT to_regclass('_prisma_migrations') IS NOT NULL AS exists"
-    );
+    const ledger = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT to_regclass('_prisma_migrations') IS NOT NULL AS exists
+    `;
 
     if (ledger[0]?.exists) {
       throw new Error(
@@ -188,7 +130,61 @@ async function main() {
       );
     }
 
-    await verifyMigrationEffects();
+    const checks: Array<{
+      migration: string;
+      satisfied: boolean;
+      reason: string;
+    }> = [
+      {
+        migration: expectedMigrations[0],
+        satisfied: await hasColumn("app_users", "password_hash"),
+        reason: "app_users.password_hash exists"
+      },
+      {
+        migration: expectedMigrations[1],
+        satisfied:
+          (await hasTable("rate_limit_buckets")) &&
+          (await hasIndex("rate_limit_buckets_expires_at_idx")),
+        reason: "rate_limit_buckets table and expires_at index exist"
+      },
+      {
+        migration: expectedMigrations[2],
+        satisfied:
+          (await hasColumn("doctors", "map_x")) &&
+          (await hasColumn("doctors", "map_y")),
+        reason: "doctors.map_x and doctors.map_y exist"
+      },
+      {
+        migration: expectedMigrations[3],
+        satisfied:
+          (await hasTable("writing_pattern_snapshots")) &&
+          (await hasIndex("writing_pattern_snapshots_period_key")),
+        reason:
+          "writing_pattern_snapshots table and period unique index exist"
+      },
+      {
+        migration: expectedMigrations[4],
+        satisfied: await hasIndex(
+          "targets_user_id_period_start_period_end_key"
+        ),
+        reason: "targets period uniqueness index exists"
+      }
+    ];
+
+    const missing = checks.filter((check) => !check.satisfied);
+    if (missing.length > 0) {
+      const details = missing
+        .map((check) => `- ${check.migration}: ${check.reason}`)
+        .join("\n");
+      throw new Error(
+        "Refusing to baseline: one or more migration effects are missing from the existing database:\n" +
+          details
+      );
+    }
+
+    for (const check of checks) {
+      console.log("Verified migration effect: " + check.migration);
+    }
 
     console.log(
       "Verified that all " +
