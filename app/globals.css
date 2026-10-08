@@ -395,3 +395,109 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     font-size: 9px;
   }
 }
+
+
+/* Notification popover */
+.mr-bell-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  margin: auto;
+}
+.mr-notification-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: white;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 800;
+  border: 2px solid white;
+}
+.mr-notification-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: -8px;
+  width: min(380px, calc(100vw - 24px));
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, .16);
+  overflow: hidden;
+  z-index: 100;
+}
+.mr-notification-popover-head {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.mr-notification-list {
+  max-height: 360px;
+  overflow-y: auto;
+}
+.mr-notification-item {
+  width: 100%;
+  min-height: 0 !important;
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  background: white;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.mr-notification-item:hover {
+  background: #f8fafc;
+}
+.mr-notification-item.is-unread {
+  background: #eff6ff;
+}
+.mr-notification-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+.mr-notification-item.is-unread .mr-notification-dot {
+  background: #2563eb;
+}
+.mr-notification-view-all {
+  width: 100%;
+  min-height: 0 !important;
+  padding: 11px 16px;
+  background: white;
+  border: 0;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+.mr-notification-view-all:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 767px) {
+  .mr-notification-popover {
+    position: fixed;
+    top: 66px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+    max-width: none;
+    border-radius: 16px;
+  }
+}
