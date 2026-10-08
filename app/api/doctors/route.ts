@@ -1,16 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
+import { z } from "zod";
+
+const doctorQuerySchema = z.object({
+  patch: z.string().trim().min(1).max(100).default("Veera Desai"),
+  specialty: z.string().trim().min(1).max(100).default("All"),
+  q: z.string().trim().max(200).default(""),
+  sort: z.enum(["score", "distance"]).default("score")
+});
 
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { searchParams } = new URL(request.url);
-  const patch = searchParams.get("patch") || "Veera Desai";
-  const specialty = searchParams.get("specialty") || "All";
-  const q = searchParams.get("q")?.trim() || "";
-  const sort = searchParams.get("sort") || "score";
+  const searchParams = new URL(request.url).searchParams;
+  const parsed = doctorQuerySchema.safeParse({
+    patch: searchParams.get("patch") ?? undefined,
+    specialty: searchParams.get("specialty") ?? undefined,
+    q: searchParams.get("q") ?? undefined,
+    sort: searchParams.get("sort") ?? undefined
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid doctor filters", details: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { patch, specialty, q, sort } = parsed.data;
 
   const doctors = await prisma.doctor.findMany({
     where: {
