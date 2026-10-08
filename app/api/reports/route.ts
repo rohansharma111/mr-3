@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 
 
-const dateOnlySchema = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/);
+const dateOnlySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 function parseDateOnly(value: string) {
   if (!dateOnlySchema.safeParse(value).success) return null;
