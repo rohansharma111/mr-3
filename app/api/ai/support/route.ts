@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 import { buildAiContext } from "@/lib/ai";
 import { consumeAiRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import { isAiSupportEnabled } from "@/lib/ai-config";
 
 const requestSchema = z.object({
   question: z.string().trim().min(2).max(1200)
@@ -68,14 +69,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized", requestId }, { status: 401 });
   }
 
+  if (!isAiSupportEnabled()) {
+    return NextResponse.json(
+      {
+        error: "AI Support is coming soon.",
+        requestId
+      },
+      {
+        status: 503,
+        headers: requestIdHeaders(requestId)
+      }
+    );
+  }
+
   const parsed = requestSchema.safeParse(
     await request.json().catch(() => null)
   );
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid AI question", details: parsed.error.flatten() },
-      { status: 400 }
+      { error: "Invalid AI question", details: parsed.error.flatten(), requestId },
+      { status: 400, headers: requestIdHeaders(requestId) }
     );
   }
 
@@ -92,11 +106,12 @@ export async function POST(request: NextRequest) {
 
   if (!rateLimit.allowed) {
     return NextResponse.json(
-      { error: "AI Support rate limit exceeded. Please try again shortly." },
+      { error: "AI Support rate limit exceeded. Please try again shortly.", requestId },
       {
         status: 429,
         headers: {
           ...rateLimitHeaders(rateLimit),
+          ...requestIdHeaders(requestId),
           "Retry-After": String(rateLimit.retryAfterSeconds)
         }
       }
@@ -106,8 +121,8 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "AI Support is not configured. Add OPENAI_API_KEY on the server." },
-      { status: 503 }
+      { error: "AI Support is not configured.", requestId },
+      { status: 503, headers: requestIdHeaders(requestId) }
     );
   }
 
@@ -115,8 +130,8 @@ export async function POST(request: NextRequest) {
   const model = process.env.OPENAI_MODEL;
   if (!model) {
     return NextResponse.json(
-      { error: "AI Support is not configured. Add OPENAI_MODEL on the server." },
-      { status: 503 }
+      { error: "AI Support is not configured.", requestId },
+      { status: 503, headers: requestIdHeaders(requestId) }
     );
   }
   const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
@@ -158,16 +173,16 @@ export async function POST(request: NextRequest) {
 
   if (!response.ok) {
     return NextResponse.json(
-      { error: "AI provider rejected the request." },
-      { status: 502 }
+      { error: "AI provider rejected the request.", requestId },
+      { status: 502, headers: requestIdHeaders(requestId) }
     );
   }
 
   const answer = extractOutputText(payload);
   if (!answer) {
     return NextResponse.json(
-      { error: "AI provider returned an empty response." },
-      { status: 502 }
+      { error: "AI provider returned an empty response.", requestId },
+      { status: 502, headers: requestIdHeaders(requestId) }
     );
   }
 
@@ -192,8 +207,14 @@ export async function POST(request: NextRequest) {
     {
       answer,
       model,
-      groundedIn: "MR 3.0 operational data"
+      groundedIn: "MR 3.0 operational data",
+      requestId
     },
-    { headers: rateLimitHeaders(rateLimit) }
+    {
+      headers: {
+        ...rateLimitHeaders(rateLimit),
+        ...requestIdHeaders(requestId)
+      }
+    }
   );
 }
