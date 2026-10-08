@@ -57,7 +57,8 @@ const expectedMigrations = [
   "20261008150000_add_rate_limit_buckets",
   "20261008160000_add_doctor_map_coordinates",
   "20261008170000_add_writing_pattern_snapshots",
-  "20261008190000_add_target_period_uniqueness"
+  "20261008190000_add_target_period_uniqueness",
+  "20261009010000_add_patch_location_hierarchy"
 ] as const;
 
 async function hasColumn(tableName: string, columnName: string) {
@@ -168,6 +169,14 @@ async function main() {
           "targets_user_id_period_start_period_end_key"
         ),
         reason: "targets period uniqueness index exists"
+      },
+      {
+        migration: expectedMigrations[5],
+        satisfied:
+          (await hasColumn("patches", "state")) &&
+          (await hasColumn("patches", "region")) &&
+          (await hasIndex("patches_state_region_idx")),
+        reason: "patches.state, patches.region, and state/region index exist"
       }
     ];
 
