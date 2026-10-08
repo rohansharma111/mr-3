@@ -13,7 +13,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "auth:set-password": "tsx scripts/set-user-password.ts",
-    "db:baseline-dev": "tsx scripts/baseline-existing-dev-db.ts"
+    "db:baseline-dev": "tsx scripts/baseline-existing-dev-db.ts",
+    "db:baseline-existing": "tsx scripts/baseline-existing-db.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.17.0",
