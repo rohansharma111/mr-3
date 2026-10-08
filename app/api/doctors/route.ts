@@ -38,6 +38,9 @@ export async function GET(request: NextRequest) {
     loc: doctor.location,
     score: doctor.score,
     potential: doctor.potential === "HIGH" ? "High" : doctor.potential === "LOW" ? "Low" : "Medium",
-    dist: doctor.distanceKm ? doctor.distanceKm.toString() + " km" : "—"
+    dist: doctor.distanceKm ? doctor.distanceKm.toString() + " km" : "—",
+    coords: doctor.mapX !== null && doctor.mapY !== null
+      ? { x: Number(doctor.mapX), y: Number(doctor.mapY) }
+      : null
   })));
 }

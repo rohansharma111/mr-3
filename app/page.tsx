@@ -51,11 +51,33 @@ type Doctor = {
   score: number;
   potential: "High" | "Medium" | "Low";
   dist: string;
+  coords: { x: number; y: number } | null;
 };
 
 type AiMessage = {
   role: "user" | "assistant";
   content: string;
+};
+
+type WritingPattern = {
+  period: "This Month" | "Last 3 Months";
+  categories: [string, number][];
+  molecules: [string, string][];
+  insight: string;
+  sourceLabel: string;
+  doctorSpecific: boolean;
+};
+
+type DashboardSummary = {
+  doctors: number;
+  highPotential: number;
+  highPotentialPercent: number;
+  calls: number;
+  sampleUnits: number;
+  conversionRate: number | null;
+  topSpecialty: string | null;
+  topSpecialtyCount: number;
+  topMolecule: string | null;
 };
 
 const nav = [
@@ -75,19 +97,6 @@ const formatLocalDate = (date: Date) => {
   return year + "-" + month + "-" + day;
 };
 
-const writingPatterns = {
-  "This Month": {
-    categories: [["Pain Relievers",45],["Antibiotics",20],["Gastro Medicines",16],["Vitamins / Supplements",12],["Others",7]],
-    molecules: [["Aceclofenac + Paracetamol","30%"],["Paracetamol","15%"],["Etoricoxib","11%"],["Amoxicillin + Clavulanate","9%"],["Pantoprazole","8%"],["Vitamin D3","6%"],["Others","21%"]],
-    insight: "Pain Relievers jumped to 45% this month due to seasonal joint flare-ups."
-  },
-  "Last 3 Months": {
-    categories: [["Pain Relievers",42],["Antibiotics",22],["Gastro Medicines",15],["Vitamins / Supplements",12],["Others",9]],
-    molecules: [["Aceclofenac + Paracetamol","28%"],["Paracetamol","14%"],["Etoricoxib","12%"],["Amoxicillin + Clavulanate","10%"],["Pantoprazole","8%"],["Vitamin D3","5%"],["Others","23%"]],
-    insight: "Doctor prescribes Pain Relievers most frequently (42%). Focus on Pain Management products."
-  }
-} as const;
-
 export default function Home() {
   const [section, setSection] = useState("explorer");
   const [patch, setPatch] = useState("Veera Desai");
@@ -99,6 +108,7 @@ export default function Home() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selected, setSelected] = useState<Doctor | null>(null);
   const [period, setPeriod] = useState<"This Month" | "Last 3 Months">("Last 3 Months");
+  const [writingPattern, setWritingPattern] = useState<WritingPattern | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [callOpen, setCallOpen] = useState(false);
@@ -155,6 +165,7 @@ export default function Home() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [aiInput, setAiInput] = useState("");
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
     {
@@ -198,6 +209,28 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/analytics/writing-pattern?period=" + encodeURIComponent(period), { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Unable to load writing pattern");
+        return response.json();
+      })
+      .then((data: WritingPattern) => { if (!cancelled) setWritingPattern(data); })
+      .catch(() => { if (!cancelled) setWritingPattern(null); })
+    return () => { cancelled = true; };
+  }, [period]);
+
+  useEffect(() => {
+    fetch("/api/dashboard/summary", { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Unable to load dashboard summary");
+        return response.json();
+      })
+      .then((data: DashboardSummary) => setDashboardSummary(data))
+      .catch(() => setDashboardSummary(null));
   }, []);
 
   useEffect(() => {
@@ -511,14 +544,19 @@ export default function Home() {
     }
   };
 
-  const writing = writingPatterns[period];
+  const writing = writingPattern ?? { categories: [], molecules: [], insight: "Writing pattern data is unavailable.", sourceLabel: "UNAVAILABLE", doctorSpecific: false };
   const selectedDoctor = selected ?? doctors[0] ?? null;
 
-  const mapPoints = useMemo(() => doctors.map((doctor, index) => ({
-    doctor,
-    left: 10 + ((index * 17) % 78),
-    top: 15 + ((index * 23) % 68)
-  })), [doctors]);
+  const mapPoints = useMemo(
+    () => doctors
+      .filter((doctor) => doctor.coords !== null)
+      .map((doctor) => ({
+        doctor,
+        left: doctor.coords?.x ?? 0,
+        top: doctor.coords?.y ?? 0
+      })),
+    [doctors]
+  );
 
   return (
     <div className="h-screen overflow-hidden flex bg-slate-50">
@@ -628,7 +666,7 @@ export default function Home() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-800">📍 Doctor Location Map — {patch}</h3><span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Live GPS Simulation</span></div>
+                    <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-800">📍 Doctor Location Map — {patch}</h3><span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Source-backed demo coordinates</span></div>
                     <div className="relative h-64 bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
                       <div className="absolute inset-0 opacity-20" style={{backgroundImage:"radial-gradient(#60a5fa 1px, transparent 1px)",backgroundSize:"24px 24px"}} />
                       {mapPoints.map(({doctor,left,top}) => <button key={doctor.id} onClick={() => {setSelected(doctor);setSection("potential");}} style={{left:left+"%",top:top+"%"}}
@@ -639,7 +677,7 @@ export default function Home() {
                 </div>
 
                 <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-5">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><div><h3 className="font-bold text-slate-900">Writing Pattern — {selectedDoctor?.name ?? "Dr. Ankit Rawal"}</h3><p className="text-xs text-slate-500">Therapeutic category share</p></div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><div><h3 className="font-bold text-slate-900">Writing Pattern — {selectedDoctor?.name ?? "Dr. Ankit Rawal"}</h3><p className="text-xs text-slate-500">Therapeutic category share · {writing.doctorSpecific ? "doctor-specific" : "prototype source snapshot"}</p></div>
                     <select value={period} onChange={(e) => setPeriod(e.target.value as typeof period)} className="text-xs bg-slate-100 px-2.5 py-1.5 rounded-lg font-semibold"><option>This Month</option><option>Last 3 Months</option></select>
                   </div>
                   <div><div className="text-xs font-semibold text-slate-500 mb-2">What does doctor prescribe most?</div><div className="space-y-2">{writing.categories.map(([name,share]) => <div key={name}><div className="flex justify-between text-xs mb-1"><span>{name}</span><b>{share}%</b></div><div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-blue-600 h-full rounded-full" style={{width:share+"%"}} /></div></div>)}</div></div>
@@ -656,9 +694,9 @@ export default function Home() {
               <div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2><p className="text-sm text-slate-500">Detailed performance & prescribing insights</p></div><div className="flex gap-2"><div className="flex gap-2"><button onClick={() => openPlanDialog(selectedDoctor)} className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button><button onClick={() => openSampleDialog(selectedDoctor)} className="bg-white border border-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">□ Issue Samples</button></div><button onClick={() => { setCallMessage(""); setCallNotes(""); setCallOpen(true); }} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button></div></div>
               <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 rounded-2xl shadow-md"><h3 className="text-xl font-black">{selectedDoctor.name}<span className="ml-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] uppercase font-bold px-2 py-1 rounded-full">{selectedDoctor.potential} Potential</span></h3><p className="text-blue-200 text-sm mt-1">{selectedDoctor.spec} · {selectedDoctor.clinic}</p><p className="text-xs text-slate-300 mt-2">📍 {selectedDoctor.loc} · {selectedDoctor.dist}</p></div>
               <div className="grid xl:grid-cols-12 gap-5">
-                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex gap-5 border-b border-slate-100 pb-4 mb-5"><button className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-3 text-sm">Overview</button><button className="text-slate-500 text-sm pb-3">Prescribing</button><button className="text-slate-500 text-sm pb-3">History</button><button className="text-slate-500 text-sm pb-3">Insights</button></div><div className="grid grid-cols-3 gap-3">{[["Potential Score",selectedDoctor.score+"/100"],["Monthly Scripts","185"],["Conversion","18.2%"]].map(([a,b])=><div key={a} className="bg-slate-50 rounded-xl p-4"><div className="text-xs uppercase tracking-wider text-slate-400">{a}</div><div className="text-2xl font-black mt-1">{b}</div></div>)}</div><div className="mt-5 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900"><b>🎯 Next Best Action</b><p className="mt-1">Pitch High-Intensity statin combination on Thursday.</p></div>
+                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex gap-5 border-b border-slate-100 pb-4 mb-5"><button className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-3 text-sm">Overview</button><button className="text-slate-500 text-sm pb-3">Prescribing</button><button className="text-slate-500 text-sm pb-3">History</button><button className="text-slate-500 text-sm pb-3">Insights</button></div><div className="grid grid-cols-3 gap-3">{[["Potential Score",selectedDoctor.score+"/100"],["Monthly Scripts","Not tracked"],["Conversion","Not tracked"]].map(([a,b])=><div key={a} className="bg-slate-50 rounded-xl p-4"><div className="text-xs uppercase tracking-wider text-slate-400">{a}</div><div className="text-2xl font-black mt-1">{b}</div></div>)}</div><div className="mt-5 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900"><b>🎯 Next Best Action</b><p className="mt-1">Not available from the current persisted activity model.</p></div>
                   <div className="mt-5 border-t border-slate-100 pt-5"><div className="flex items-center justify-between mb-3"><h4 className="font-bold text-sm">Recent Call History</h4><button onClick={()=>setSection("calls")} className="text-xs text-blue-600 font-bold">View all →</button></div>{callHistory.filter(call=>call.doctorId===selectedDoctor.id).slice(0,3).map(call=><div key={call.id} className="border border-slate-100 rounded-xl p-3 mb-2"><div className="flex justify-between gap-3"><span className="text-xs font-bold text-slate-800">{call.outcome}</span><span className="text-[10px] text-slate-400">{new Date(call.calledAt).toLocaleDateString()}</span></div><div className="text-xs text-slate-500 mt-1">{call.notes||"No notes recorded"}{call.productName?" · "+call.productName:""}</div></div>)}{callHistory.filter(call=>call.doctorId===selectedDoctor.id).length===0&&<p className="text-xs text-slate-400">Open My Calls to load this doctor’s recorded history.</p>}</div></div>
-                <div className="xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex justify-between border-b border-slate-100 pb-3"><h3 className="font-bold">Doctor Availability</h3><span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full font-bold">Verified Schedule</span></div><div className="bg-blue-50 border border-blue-100 p-3.5 rounded-xl mt-4"><div className="text-xs uppercase text-blue-700 font-bold">Best Time to Visit</div><div className="text-base font-black text-blue-900 mt-1">10:30 AM – 12:30 PM</div><div className="text-xs text-blue-700">Mon–Sat</div></div><div className="border-t border-slate-100 mt-4 pt-4"><h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Primary Chemist Link</h4><div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100"><div><b className="text-sm">Noble Pharmacy</b><div className="text-xs text-slate-500">Veera Desai Rd · 185 scripts/mo</div></div><span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg">In Stock</span></div></div></div>
+                <div className="xl:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex justify-between border-b border-slate-100 pb-3"><h3 className="font-bold">Doctor Availability</h3><span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded-full font-bold">Not tracked</span></div><div className="bg-blue-50 border border-blue-100 p-3.5 rounded-xl mt-4"><div className="text-xs uppercase text-blue-700 font-bold">Best Time to Visit</div><div className="text-base font-black text-blue-900 mt-1">Not available</div><div className="text-xs text-blue-700">Schedule data is not persisted yet.</div></div><div className="border-t border-slate-100 mt-4 pt-4"><h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">Primary Chemist Link</h4><div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-500">Stockist relationships are available in Stockist Data; a doctor-to-chemist relationship is not currently modeled.</div></div></div>
               </div>
             </section>
           )}
@@ -962,7 +1000,7 @@ export default function Home() {
             </div></div>
           )}
 
-          <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Total Doctors: <b className="text-slate-900">1,243</b></span><span>High Potential: <b className="text-emerald-600">312 (25.1%)</b></span><span>Total Calls: <b className="text-slate-900">156</b></span><span>Samples: <b className="text-slate-900">320</b></span><span>Conversion Rate: <b className="text-blue-600">18.2%</b></span><span>Top Specialty: <b className="text-slate-900">Cardiologists (42%)</b></span><span>Top Molecule: <b className="text-slate-900">Aceclofenac + Paracetamol</b></span></div><button onClick={() => setSection("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
+          <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Doctors: <b className="text-slate-900">{dashboardSummary?.doctors ?? "—"}</b></span><span>High Potential: <b className="text-emerald-600">{dashboardSummary ? dashboardSummary.highPotential + " (" + dashboardSummary.highPotentialPercent + "%)" : "—"}</b></span><span>Your Calls: <b className="text-slate-900">{dashboardSummary?.calls ?? "—"}</b></span><span>Your Sample Units: <b className="text-slate-900">{dashboardSummary?.sampleUnits ?? "—"}</b></span><span>Conversion Rate: <b className="text-blue-600">{dashboardSummary?.conversionRate == null ? "Not tracked" : dashboardSummary.conversionRate + "%"}</b></span><span>Top Specialty: <b className="text-slate-900">{dashboardSummary?.topSpecialty ? dashboardSummary.topSpecialty + " (" + dashboardSummary.topSpecialtyCount + ")" : "—"}</b></span><span>Top Molecule: <b className="text-slate-900">{dashboardSummary?.topMolecule ?? "—"}</b></span></div><button onClick={() => setSection("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
         </div>
       </main>
     </div>
