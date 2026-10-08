@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { UserMenu } from "./components/user-menu";
+import { StockistPanel } from "./components/stockist-panel";
 
 type Product = { id: string; name: string; molecule: string | null; category: string | null };
 
@@ -587,9 +588,7 @@ export default function Home() {
             </section>
           )}
 
-          {section === "stockist" && (
-            <section className="space-y-6"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Stockist Data</h2><p className="text-sm text-slate-500">Real-time stockist performance & availability</p></div><div className="flex gap-2"><select className="text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl"><option>Mumbai</option><option>Delhi</option></select><select className="text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl"><option>Andheri Region</option><option>Bandra Region</option></select></div></div><div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Total Stockists","48"],["In Stock","41"],["Low Stock","5"],["Out of Stock","2"]].map(([a,b])=><div key={a} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><div className="text-xs uppercase tracking-wider font-semibold text-slate-400">{a}</div><div className="text-2xl font-black text-slate-900 mt-1">{b}</div></div>)}</div><div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm"><div className="px-5 py-4 border-b border-slate-100 font-bold">Aceclofenac + Paracetamol Availability</div><table className="w-full text-sm"><thead className="bg-slate-50 text-xs text-slate-500 uppercase"><tr><th className="p-3 text-left">Stockist</th><th className="p-3 text-left">Location</th><th className="p-3 text-left">Quantity</th><th className="p-3 text-left">Updated</th><th className="p-3 text-left">Status</th></tr></thead><tbody>{[["Shree Sai Medicals","Veera Desai Rd","480 strips","2 hrs ago","Good"],["HealthCare Distributors","Versova","320 strips","5 hrs ago","Good"],["Andheri Medico","Andheri Station","110 strips","1 day ago","Average"],["Lokhandwala Pharma","Lokhandwala","25 strips","2 days ago","Low"]].map(row=><tr key={row[0]} className="border-t border-slate-100"><td className="p-3 font-bold">{row[0]}</td><td className="p-3">{row[1]}</td><td className="p-3 font-mono">{row[2]}</td><td className="p-3 text-slate-500">{row[3]}</td><td className="p-3"><span className={(row[4]==="Good"?"bg-emerald-100 text-emerald-800":row[4]==="Average"?"bg-amber-100 text-amber-800":"bg-red-100 text-red-800")+" text-xs font-bold px-2.5 py-1 rounded-full"}>{row[4]}</span></td></tr>)}</tbody></table></div></section>
-          )}
+          {section === "stockist" && <StockistPanel />}
 
           {section === "calls" && (
             <section className="space-y-6">
