@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 import { buildAiContext } from "@/lib/ai";
+import { consumeAiRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 const requestSchema = z.object({
   question: z.string().trim().min(2).max(1200)
@@ -67,6 +68,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  let rateLimit: Awaited<ReturnType<typeof consumeAiRateLimit>>;
+
+  try {
+    rateLimit = await consumeAiRateLimit(user.id);
+  } catch {
+    return NextResponse.json(
+      { error: "AI Support is temporarily unavailable." },
+      { status: 503 }
+    );
+  }
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "AI Support rate limit exceeded. Please try again shortly." },
+      {
+        status: 429,
+        headers: {
+          ...rateLimitHeaders(rateLimit),
+          "Retry-After": String(rateLimit.retryAfterSeconds)
+        }
+      }
+    );
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
@@ -76,7 +101,13 @@ export async function POST(request: NextRequest) {
   }
 
   const context = await buildAiContext(user.id);
-  const model = process.env.OPENAI_MODEL || "gpt-6-luna";
+  const model = process.env.OPENAI_MODEL;
+  if (!model) {
+    return NextResponse.json(
+      { error: "AI Support is not configured. Add OPENAI_MODEL on the server." },
+      { status: 503 }
+    );
+  }
   const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/$/, "");
 
   const input = [
@@ -145,9 +176,12 @@ export async function POST(request: NextRequest) {
     // AI response should not fail because audit logging failed.
   }
 
-  return NextResponse.json({
-    answer,
-    model,
-    groundedIn: "MR 3.0 operational data"
-  });
+  return NextResponse.json(
+    {
+      answer,
+      model,
+      groundedIn: "MR 3.0 operational data"
+    },
+    { headers: rateLimitHeaders(rateLimit) }
+  );
 }
