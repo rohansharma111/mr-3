@@ -59,6 +59,15 @@ type AiMessage = {
   content: string;
 };
 
+type WritingPattern = {
+  period: "This Month" | "Last 3 Months";
+  categories: [string, number][];
+  molecules: [string, string][];
+  insight: string;
+  sourceLabel: string;
+  doctorSpecific: boolean;
+};
+
 type DashboardSummary = {
   doctors: number;
   highPotential: number;
@@ -88,21 +97,6 @@ const formatLocalDate = (date: Date) => {
   return year + "-" + month + "-" + day;
 };
 
-const writingPatterns = {
-  "This Month": {
-    categories: [["Pain Relievers",45],["Antibiotics",20],["Gastro Medicines",16],["Vitamins / Supplements",12],["Others",7]],
-    molecules: [["Aceclofenac + Paracetamol","30%"],["Paracetamol","15%"],["Etoricoxib","11%"],["Amoxicillin + Clavulanate","9%"],["Pantoprazole","8%"],["Vitamin D3","6%"],["Others","21%"]],
-    insight: "Pain Relievers jumped to 45% this month due to seasonal joint flare-ups."
-  },
-  "Last 3 Months": {
-    categories: [["Pain Relievers",42],["Antibiotics",22],["Gastro Medicines",15],["Vitamins / Supplements",12],["Others",9]],
-    molecules: [["Aceclofenac + Paracetamol","28%"],["Paracetamol","14%"],["Etoricoxib","12%"],["Amoxicillin + Clavulanate","10%"],["Pantoprazole","8%"],["Vitamin D3","5%"],["Others","23%"]],
-    insight: "Doctor prescribes Pain Relievers most frequently (42%). Focus on Pain Management products."
-  }
-} as const;
-
-;
-
 export default function Home() {
   const [section, setSection] = useState("explorer");
   const [patch, setPatch] = useState("Veera Desai");
@@ -114,6 +108,8 @@ export default function Home() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selected, setSelected] = useState<Doctor | null>(null);
   const [period, setPeriod] = useState<"This Month" | "Last 3 Months">("Last 3 Months");
+  const [writingPattern, setWritingPattern] = useState<WritingPattern | null>(null);
+  const [writingPatternLoading, setWritingPatternLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [callOpen, setCallOpen] = useState(false);
@@ -215,6 +211,20 @@ export default function Home() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setWritingPatternLoading(true);
+    fetch("/api/analytics/writing-pattern?period=" + encodeURIComponent(period), { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Unable to load writing pattern");
+        return response.json();
+      })
+      .then((data: WritingPattern) => { if (!cancelled) setWritingPattern(data); })
+      .catch(() => { if (!cancelled) setWritingPattern(null); })
+      .finally(() => { if (!cancelled) setWritingPatternLoading(false); });
+    return () => { cancelled = true; };
+  }, [period]);
 
   useEffect(() => {
     fetch("/api/dashboard/summary", { cache: "no-store" })
@@ -537,7 +547,7 @@ export default function Home() {
     }
   };
 
-  const writing = writingPatterns[period];
+  const writing = writingPattern ?? { categories: [], molecules: [], insight: "Writing pattern data is unavailable.", sourceLabel: "UNAVAILABLE", doctorSpecific: false };
   const selectedDoctor = selected ?? doctors[0] ?? null;
 
   const mapPoints = useMemo(
@@ -670,7 +680,7 @@ export default function Home() {
                 </div>
 
                 <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-5">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><div><h3 className="font-bold text-slate-900">Writing Pattern — {selectedDoctor?.name ?? "Dr. Ankit Rawal"}</h3><p className="text-xs text-slate-500">Therapeutic category share</p></div>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3"><div><h3 className="font-bold text-slate-900">Writing Pattern — {selectedDoctor?.name ?? "Dr. Ankit Rawal"}</h3><p className="text-xs text-slate-500">Therapeutic category share · {writing.doctorSpecific ? "doctor-specific" : "prototype source snapshot"}</p></div>
                     <select value={period} onChange={(e) => setPeriod(e.target.value as typeof period)} className="text-xs bg-slate-100 px-2.5 py-1.5 rounded-lg font-semibold"><option>This Month</option><option>Last 3 Months</option></select>
                   </div>
                   <div><div className="text-xs font-semibold text-slate-500 mb-2">What does doctor prescribe most?</div><div className="space-y-2">{writing.categories.map(([name,share]) => <div key={name}><div className="flex justify-between text-xs mb-1"><span>{name}</span><b>{share}%</b></div><div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"><div className="bg-blue-600 h-full rounded-full" style={{width:share+"%"}} /></div></div>)}</div></div>
