@@ -8,6 +8,19 @@ const patchData = [
   ["Andheri Station", 18], ["Oshiwara", 15], ["Lokhandwala", 16], ["Jogeshwari (W)", 14]
 ] as const;
 
+const doctorMapCoords: Record<string, readonly [number, number]> = {
+  "Dr. Ankit Rawal": [35, 40],
+  "Dr. Ramesh Gupta": [48, 58],
+  "Dr. Neha Verma": [68, 30],
+  "Dr. Amit Shah": [25, 72],
+  "Dr. Pooja Mehta": [75, 75],
+  "Dr. Suresh Patil": [52, 25],
+  "Dr. Kirit Desai": [40, 35],
+  "Dr. Sneha Kulkarni": [60, 65],
+  "Dr. Kabir Malik": [45, 45],
+  "Dr. Tanya Sen": [70, 55]
+};
+
 const doctorData = [
   ["Dr. Ankit Rawal","Cardiologist","HealthCare Clinic","Veera Desai Rd",92,"HIGH",0.6,"Veera Desai"],
   ["Dr. Ramesh Gupta","Cardiologist","City Heart Hospital","Veera Desai Rd",88,"HIGH",1.2,"Veera Desai"],
@@ -38,9 +51,10 @@ async function main() {
 
   for (const [name, spec, clinic, location, score, potential, distanceKm, patchName] of doctorData) {
     const specialty = await prisma.specialty.findUniqueOrThrow({ where: { name: spec } });
+    const [mapX, mapY] = doctorMapCoords[name] ?? [null, null];
     const existing = await prisma.doctor.findFirst({ where: { name } });
     const doctor = existing
-      ? await prisma.doctor.update({ where: { id: existing.id }, data: { clinic, location, score, potential, distanceKm, specialtyId: specialty.id, isDemo: true } })
+      ? await prisma.doctor.update({ where: { id: existing.id }, data: { clinic, location, score, potential, distanceKm, mapX, mapY, specialtyId: specialty.id, isDemo: true } })
       : await prisma.doctor.create({ data: { name, clinic, location, score, potential, distanceKm, specialtyId: specialty.id, isDemo: true } });
     const patch = await prisma.patch.findUniqueOrThrow({ where: { name: patchName } });
     await prisma.doctorPatch.upsert({
