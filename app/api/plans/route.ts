@@ -46,6 +46,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Plan date range is invalid" }, { status: 400 });
   }
 
+  if (parsedFrom && parsedTo) {
+    const maxTo = new Date(parsedFrom.getTime() + 366 * 24 * 60 * 60 * 1000);
+    if (parsedTo > maxTo) {
+      return NextResponse.json(
+        { error: "Plan date range cannot exceed one year" },
+        { status: 400 }
+      );
+    }
+  }
+
   const plans = await prisma.plan.findMany({
     where: {
       userId: user.id,
