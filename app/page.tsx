@@ -785,12 +785,12 @@ export default function Home() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-800">📍 Doctor Location Map — {patch}</h3><span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Source-backed demo coordinates</span></div>
+                    <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-800">📍 Doctor Location Map — {patch}</h3><span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Persisted reference coordinates</span></div>
                     <div className="relative h-64 bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
                       <div className="absolute inset-0 opacity-20" style={{backgroundImage:"radial-gradient(#60a5fa 1px, transparent 1px)",backgroundSize:"24px 24px"}} />
                       {mapPoints.map(({doctor,left,top}) => <button key={doctor.id} onClick={() => {setSelected(doctor);setSection("potential");}} style={{left:left+"%",top:top+"%"}}
                         className={"absolute flex items-center justify-center w-7 h-7 rounded-full shadow-lg border-2 border-white text-xs font-black " + (selectedDoctor?.id===doctor.id ? "bg-blue-600 text-white" : "bg-red-600 text-white")}>●</button>)}
-                      <div className="absolute bottom-3 left-3 bg-slate-900/90 border border-slate-700 text-white text-xs px-3 py-1.5 rounded-lg">MR Current Position: <span className="text-emerald-400 font-bold">Andheri Station Hub</span></div>
+                      <div className="absolute bottom-3 left-3 bg-slate-900/90 border border-slate-700 text-white text-xs px-3 py-1.5 rounded-lg">Reference map: <span className="text-emerald-400 font-bold">persisted coordinates</span></div>
                     </div>
                   </div>
                 </div>
