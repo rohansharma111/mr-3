@@ -211,3 +211,13 @@ model Notification {
   @@index([userId, createdAt])
   @@map("notifications")
 }
+
+model RateLimitBucket {
+  key         String   @id
+  windowStart DateTime @map("window_start") @db.Timestamptz(6)
+  requestCount Int     @default(0) @map("request_count")
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@index([expiresAt])
+  @@map("rate_limit_buckets")
+}
