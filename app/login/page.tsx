@@ -47,11 +47,13 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-6">
-      <div className="absolute inset-0 pointer-events-none opacity-40" aria-hidden="true"><div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-blue-600/20 blur-3xl" /><div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" /></div>\n      <div className="relative w-full max-w-md rounded-3xl border border-slate-800 bg-white p-6 sm:p-8 shadow-2xl">
+    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4 sm:px-6 py-8 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none opacity-40" aria-hidden="true"><div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-blue-600/20 blur-3xl" /><div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" /></div>
+      <div className="relative w-full max-w-md rounded-3xl border border-slate-800 bg-white p-6 sm:p-8 shadow-2xl">
         <div className="mb-8">
-          <div className="text-xs font-semibold uppercase tracking-[0.25em] text-blue-600">
-            MR 3.0
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-black text-white shadow-lg shadow-blue-600/20">MR</span>
+            <div><div className="text-sm font-black tracking-tight text-slate-900">MR 3.0</div><div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-600">Smarter. Faster. Better.</div></div>
           </div>
           <h1 className="mt-2 text-3xl font-bold text-slate-900">Welcome back</h1>
           <p className="mt-2 text-sm text-slate-500">
@@ -96,7 +98,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white shadow-lg shadow-blue-600/15 transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
