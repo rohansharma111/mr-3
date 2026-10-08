@@ -55,6 +55,8 @@ model Doctor {
   distanceKm   Decimal?      @map("distance_km") @db.Decimal
   latitude     Decimal?      @db.Decimal
   longitude    Decimal?      @db.Decimal
+  mapX         Decimal?      @map("map_x") @db.Decimal(5, 2)
+  mapY         Decimal?      @map("map_y") @db.Decimal(5, 2)
   isActive     Boolean       @default(true) @map("is_active")
   isDemo       Boolean       @default(true) @map("is_demo")
   patches      DoctorPatch[]
