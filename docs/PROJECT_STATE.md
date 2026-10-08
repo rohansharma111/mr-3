@@ -58,8 +58,8 @@ Important source-derived demo values:
 - Writing-pattern categories/molecules are source data in the prototype and are represented in the current UI; they should be moved into persistent analytics data in a later pass.
 
 ## Current code
-- src/app/page.tsx is the main client UI. It now calls the database-backed doctor API instead of keeping the doctor list as the Explorer data source.
-- src/app/api/doctors/route.ts provides filtered/sorted doctor queries by patch, specialty and search query.
+- app/page.tsx is the active main client UI under the root Next.js app directory. It now calls the database-backed doctor API instead of keeping the doctor list as the Explorer data source.
+- app/api/doctors/route.ts provides filtered/sorted doctor queries by patch, specialty and search query.
 - src/app/api/calls/route.ts provides validated GET/POST call logging; POST persists the call and creates an audit event in one transaction.
 - The same calls API now supports filtered history queries by doctor/status and bounded result limits.
 - prisma/schema.prisma defines the main domain models.
@@ -73,7 +73,7 @@ Important source-derived demo values:
 - Log Call is now a real modal workflow from Doctor Potential: validated outcome/notes are persisted to Neon and audited.
 - My Calls is now a database-backed module with status filtering, refresh, summary cards and call-history table.
 - Doctor Potential now surfaces recent calls for the selected doctor using the same call-history source.
-- AI Support has the prototype-style chat/recommendation shell; it is still a UI placeholder and must not be represented as a real AI service yet.
+- AI Support is now connected to an authenticated server-side Responses API endpoint and grounded in MR 3.0 operational data.
 - Stockist Data has the prototype-style summary and stock table.
 - My Plan is persistent and auditable.
 - Samples are persistent and auditable.
@@ -90,8 +90,8 @@ Important source-derived demo values:
 4. Complete the Explorer data model: coordinates, writing-pattern analytics and source-backed map positions.
 5. Expand doctor profile tabs beyond the current Overview shell; call history is now persisted and visible.
 6. Implement Reports and Notifications; My Calls, My Plan, Samples and Targets are now functional.
-7. Replace the temporary demo-user identity with authentication/session-derived identity and RBAC before production workflows are exposed.
-8. Add rate limiting and abuse controls for AI Support before exposing it to broad production traffic.
+7. Continue role-specific permission enforcement only where product requirements define clear management/admin boundaries.
+8. Apply the committed rate-limit migration to the development Neon branch, then validate AI Support end-to-end.
 9. Add robust validation, error handling, audit logging, indexes, tests and observability.
 10. Configure development/staging/production environment variables and deployment; keep Vercel automatic Git deployments disabled.
 
@@ -172,6 +172,9 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - AI input is validated and capped; provider requests have a timeout and provider errors are returned without exposing provider internals.
 - AI instructions explicitly prohibit invented MR 3.0 facts, hidden-prompt disclosure, diagnosis/prescribing and unsupported clinical claims.
 - AI queries are audited without storing the user's question text.
+- AI Support is limited to 20 requests per authenticated user per rolling one-minute window using a persistent PostgreSQL bucket; 429 responses include Retry-After and rate-limit headers.
+- The rate limiter requires the `rate_limit_buckets` migration before AI requests can run successfully.
+- OPENAI_MODEL is now explicitly required instead of relying on an unverified default model name.
 - The AI Support UI now sends real requests, supports the prototype prompt chips, shows loading/errors and labels responses as grounded in MR 3.0 operational data.
 - OPENAI_API_KEY, OPENAI_MODEL and optional OPENAI_BASE_URL are documented in .env.example.
 - The AI feature intentionally returns a clear configuration error when no server-side API key is configured; it does not simulate a live model.
