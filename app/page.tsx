@@ -58,14 +58,6 @@ type AiMessage = {
   content: string;
 };
 
-const patches = [
-  ["Veera Desai", 19], ["Vile Parle", 25], ["Versova", 21],
-  ["Andheri Station", 18], ["Oshiwara", 15], ["Lokhandwala", 16],
-  ["Jogeshwari (W)", 14]
-] as const;
-
-const specialties = ["All", "Cardiologist", "Diabetologist", "General Physician", "Orthopedic", "Gynecologist"];
-
 const nav = [
   ["explorer", "◉", "Doctor Explorer"], ["potential", "↗", "Doctor Potential"],
   ["ai", "✦", "AI Support"], ["stockist", "▣", "Stockist Data"]
@@ -100,6 +92,8 @@ export default function Home() {
   const [section, setSection] = useState("explorer");
   const [patch, setPatch] = useState("Veera Desai");
   const [specialty, setSpecialty] = useState("All");
+  const [patches, setPatches] = useState<{ id: string; name: string; doctorCount: number }[]>([]);
+  const [specialties, setSpecialties] = useState<string[]>(["All"]);
   const [sort, setSort] = useState("score");
   const [query, setQuery] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -168,6 +162,43 @@ export default function Home() {
       content: "Hi! 👋 I’m MR 3.0 AI Support. Ask about doctors, products, stockists, recent activity, or your upcoming plan."
     }
   ]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/metadata", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load Explorer metadata");
+        return response.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+
+        const nextPatches = Array.isArray(data.patches) ? data.patches : [];
+        const nextSpecialties = Array.isArray(data.specialties) ? data.specialties : [];
+
+        setPatches(nextPatches);
+        setSpecialties(["All", ...nextSpecialties.map((item: { name: string }) => item.name)]);
+
+        if (nextPatches.length > 0) {
+          setPatch((current) =>
+            nextPatches.some((item: { name: string }) => item.name === current)
+              ? current
+              : nextPatches[0].name
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPatches([]);
+          setSpecialties(["All"]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/products", { cache: "no-store" })
@@ -548,7 +579,7 @@ export default function Home() {
                   <select className="text-xs font-semibold bg-slate-100 px-3 py-2 rounded-lg border-none" defaultValue="Andheri Region"><option>Andheri Region</option><option>Bandra Region</option><option>Khar Region</option><option>Matunga Region</option></select>
                   <span className="text-slate-300">/</span>
                   <select value={patch} onChange={(e) => setPatch(e.target.value)} className="text-xs font-semibold bg-blue-50 text-blue-800 px-3 py-2 rounded-lg border-none">
-                    {patches.map(([name]) => <option key={name}>{name}</option>)}
+                    {patches.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
                   </select>
                   <span className="text-slate-300">/</span>
                   <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="text-xs font-semibold bg-slate-100 px-3 py-2 rounded-lg border-none">
@@ -561,9 +592,9 @@ export default function Home() {
                 <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Patches in Region</h3>
                   <div className="space-y-1.5">
-                    {patches.map(([name, count]) => <button key={name} onClick={() => setPatch(name)}
+                    {patches.map((item) => <button key={item.id} onClick={() => setPatch(item.name)}
                       className={"w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold " + (patch === name ? "bg-blue-600 text-white shadow-sm" : "hover:bg-slate-100 text-slate-700")}>
-                      <span>{name}</span><span className={(patch === name ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600") + " px-2 py-0.5 rounded-full text-[11px]"}>{count}</span>
+                      <span>{item.name}</span><span className={(patch === item.name ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600") + " px-2 py-0.5 rounded-full text-[11px]"}>{item.doctorCount}</span>
                     </button>)}
                   </div>
                 </div>
