@@ -17,6 +17,22 @@ type TargetData = {
   conversionTracking: { available: boolean; message: string };
 };
 
+type ReportData = {
+  period: { start: string; end: string };
+  calls: { total: number; completed: number; planned: number; missed: number; cancelled: number };
+  samples: { issues: number; unitsIssued: number };
+  plans: { total: number; planned: number; completed: number; missed: number; cancelled: number };
+  target: { targetCalls: number; targetSamples: number; targetConversions: number } | null;
+  topDoctors: { doctorId: string; doctorName: string; specialty: string; completedCalls: number }[];
+  topProducts: { productId: string | null; productName: string; molecule: string | null; unitsIssued: number }[];
+  conversionTracking: { available: boolean; message: string };
+};
+
+type NotificationItem = {
+  id: string; type: string; title: string; message: string;
+  actionUrl: string | null; isRead: boolean; createdAt: string;
+};
+
 type Plan = {
   id: string; doctorId: string; doctorName: string; clinic: string; location: string; specialty: string;
   score: number; potential: "HIGH" | "MEDIUM" | "LOW"; plannedFor: string;
@@ -123,6 +139,20 @@ export default function Home() {
   const [targetsLoading, setTargetsLoading] = useState(false);
   const [targetSaving, setTargetSaving] = useState(false);
   const [targetMessage, setTargetMessage] = useState("");
+  const [reportPeriodStart, setReportPeriodStart] = useState(() => {
+    const d = new Date();
+    return formatLocalDate(new Date(d.getFullYear(), d.getMonth(), 1));
+  });
+  const [reportPeriodEnd, setReportPeriodEnd] = useState(() => {
+    const d = new Date();
+    return formatLocalDate(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  });
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportMessage, setReportMessage] = useState("");
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/products", { cache: "no-store" })
@@ -253,6 +283,76 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (section !== "reports" || !reportPeriodStart || !reportPeriodEnd) return;
+    let cancelled = false;
+    setReportsLoading(true);
+    setReportMessage("");
+    fetch("/api/reports?from=" + reportPeriodStart + "&to=" + reportPeriodEnd, { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Unable to load report");
+        return response.json();
+      })
+      .then((data: ReportData) => { if (!cancelled) setReportData(data); })
+      .catch(error => {
+        if (!cancelled) {
+          setReportData(null);
+          setReportMessage(error instanceof Error ? error.message : "Unable to load report");
+        }
+      })
+      .finally(() => { if (!cancelled) setReportsLoading(false); });
+    return () => { cancelled = true; };
+  }, [section, reportPeriodStart, reportPeriodEnd]);
+
+  const loadNotifications = async () => {
+    setNotificationsLoading(true);
+    try {
+      const response = await fetch("/api/notifications", { cache: "no-store" });
+      if (!response.ok) throw new Error("Unable to load notifications");
+      const data = await response.json();
+      setNotifications(data.notifications || []);
+      setUnreadNotifications(data.unreadCount || 0);
+    } catch {
+      setNotifications([]);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  useEffect(() => {
+    if (section === "notifications") loadNotifications();
+  }, [section]);
+
+  const markNotificationRead = async (notification: NotificationItem) => {
+    const response = await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: notification.id })
+    });
+    if (!response.ok) return;
+    setNotifications(current => current.map(item => item.id === notification.id ? { ...item, isRead: true } : item));
+    setUnreadNotifications(current => Math.max(0, current - (notification.isRead ? 0 : 1)));
+    if (notification.actionUrl?.includes("section=")) {
+      const nextSection = new URLSearchParams(notification.actionUrl.split("?")[1]).get("section");
+      if (nextSection) setSection(nextSection);
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    const response = await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markAllRead: true })
+    });
+    if (!response.ok) return;
+    setNotifications(current => current.map(item => ({ ...item, isRead: true })));
+    setUnreadNotifications(0);
+  };
+
+  useEffect(() => {
     if (section !== "plan") return;
     let cancelled = false;
     setPlansLoading(true);
@@ -377,8 +477,9 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-5">
-            <button onClick={() => setSection("ai")} className="text-slate-600 hover:text-blue-600 relative">♧
-              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">2</span>
+            <button onClick={() => setSection("notifications")} className="text-slate-600 hover:text-blue-600 relative text-lg" aria-label="Notifications">
+              ◉
+              {unreadNotifications > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}
             </button>
             <div className="border-l border-slate-200 pl-4">
               <div className="text-sm font-bold text-slate-900">Amit Rawat</div>
@@ -601,7 +702,70 @@ export default function Home() {
             </section>
           )}
 
-          {!["explorer","potential","ai","stockist","calls","plan","samples","targets"].includes(section) && (
+          {section === "reports" && (
+            <section className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div><h2 className="text-2xl font-black text-slate-900">Reports</h2><p className="text-sm text-slate-500">Performance summary calculated from persisted MR 3.0 activity.</p></div>
+                <div className="flex flex-wrap gap-2 items-end">
+                  <label className="text-[11px] font-bold text-slate-500">From<input type="date" value={reportPeriodStart} onChange={e=>setReportPeriodStart(e.target.value)} className="mt-1 block text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl"/></label>
+                  <label className="text-[11px] font-bold text-slate-500">To<input type="date" value={reportPeriodEnd} onChange={e=>setReportPeriodEnd(e.target.value)} className="mt-1 block text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl"/></label>
+                </div>
+              </div>
+              {reportMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-sm font-semibold px-4 py-3 rounded-xl">{reportMessage}</div>}
+              {reportsLoading ? <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500 shadow-sm">Generating report…</div> : reportData && <>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    ["Completed Calls", reportData.calls.completed],
+                    ["Sample Units", reportData.samples.unitsIssued],
+                    ["Planned Visits", reportData.plans.planned],
+                    ["Completed Visits", reportData.plans.completed]
+                  ].map(([label,value])=><div key={String(label)} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"><div className="text-xs uppercase tracking-wider font-semibold text-slate-400">{label}</div><div className="text-2xl font-black mt-1">{value}</div></div>)}
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100"><h3 className="font-bold">Call Activity</h3><p className="text-xs text-slate-500 mt-1">{reportData.period.start} to {reportData.period.end}</p></div>
+                    <div className="p-5 grid grid-cols-2 gap-3">{[
+                      ["Total",reportData.calls.total],["Completed",reportData.calls.completed],["Planned",reportData.calls.planned],["Missed",reportData.calls.missed],["Cancelled",reportData.calls.cancelled]
+                    ].map(([label,value])=><div key={String(label)} className="bg-slate-50 rounded-xl p-3"><div className="text-xs text-slate-500">{label}</div><div className="text-xl font-black mt-1">{value}</div></div>)}</div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100"><h3 className="font-bold">Sample & Plan Activity</h3></div>
+                    <div className="p-5 grid grid-cols-2 gap-3">
+                      {[["Sample Issues",reportData.samples.issues],["Units Issued",reportData.samples.unitsIssued],["Plans",reportData.plans.total],["Plans Completed",reportData.plans.completed]].map(([label,value])=><div key={String(label)} className="bg-slate-50 rounded-xl p-3"><div className="text-xs text-slate-500">{label}</div><div className="text-xl font-black mt-1">{value}</div></div>)}
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="px-5 py-4 border-b border-slate-100"><h3 className="font-bold">Top Doctors by Completed Calls</h3></div>
+                    <div className="divide-y divide-slate-100">{reportData.topDoctors.length===0?<div className="p-6 text-sm text-slate-500">No completed calls in this period.</div>:reportData.topDoctors.map((doctor,index)=><div key={doctor.doctorId} className="p-4 flex items-center justify-between"><div><span className="text-xs font-black text-slate-400 mr-3">#{index+1}</span><span className="font-bold">{doctor.doctorName}</span><div className="text-xs text-slate-500 ml-7">{doctor.specialty}</div></div><span className="text-sm font-black text-blue-700">{doctor.completedCalls}</span></div>)}</div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="px-5 py-4 border-b border-slate-100"><h3 className="font-bold">Top Products by Sample Units</h3></div>
+                    <div className="divide-y divide-slate-100">{reportData.topProducts.length===0?<div className="p-6 text-sm text-slate-500">No issued samples in this period.</div>:reportData.topProducts.map((product,index)=><div key={product.productId ?? String(index)} className="p-4 flex items-center justify-between"><div><span className="text-xs font-black text-slate-400 mr-3">#{index+1}</span><span className="font-bold">{product.productName}</span>{product.molecule&&<div className="text-xs text-slate-500 ml-7">{product.molecule}</div>}</div><span className="text-sm font-black text-blue-700">{product.unitsIssued}</span></div>)}</div>
+                  </div>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900"><b>Data note:</b> {reportData.conversionTracking.message}</div>
+              </>}
+            </section>
+          )}
+
+          {section === "notifications" && (
+            <section className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div><h2 className="text-2xl font-black text-slate-900">Notifications</h2><p className="text-sm text-slate-500">Activity updates generated from your MR 3.0 workflows.</p></div>
+                {unreadNotifications > 0 && <button onClick={markAllNotificationsRead} className="text-xs font-bold text-blue-700 bg-blue-50 px-4 py-2.5 rounded-xl">Mark all as read</button>}
+              </div>
+              {notificationsLoading ? <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500">Loading notifications…</div> : notifications.length===0 ? <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center text-sm text-slate-500 shadow-sm">No notifications yet. Actions such as logging a call, planning a visit or issuing samples will appear here.</div> : <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+                {notifications.map(notification=><button key={notification.id} onClick={()=>markNotificationRead(notification)} className={"w-full text-left p-5 hover:bg-slate-50 flex items-start gap-4 "+(notification.isRead?"":"bg-blue-50/40")}>
+                  <div className={"w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black "+(notification.isRead?"bg-slate-100 text-slate-500":"bg-blue-100 text-blue-700")}>◉</div>
+                  <div className="flex-1 min-w-0"><div className="flex items-center justify-between gap-3"><span className="font-bold text-slate-900">{notification.title}</span><span className="text-[11px] text-slate-400 whitespace-nowrap">{new Date(notification.createdAt).toLocaleString()}</span></div><p className="text-sm text-slate-600 mt-1">{notification.message}</p>{!notification.isRead&&<span className="inline-block mt-2 text-[10px] font-black uppercase tracking-wider text-blue-700">Unread</span>}</div>
+                </button>)}
+              </div>}
+            </section>
+          )}
+
+          {!["explorer","potential","ai","stockist","calls","plan","samples","targets","reports","notifications"].includes(section) && (
             <section className="space-y-4"><h2 className="text-2xl font-black text-slate-900">{execution.find(x => x[0] === section)?.[2]}</h2><p className="text-sm text-slate-500">Module boundary established; persistent workflow is next.</p><div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">This module is intentionally being connected to the production data model instead of remaining an alert placeholder.</div></section>
           )}
 
