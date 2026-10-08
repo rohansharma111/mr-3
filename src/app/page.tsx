@@ -83,6 +83,21 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [patch, specialty, sort, query]);
 
+  useEffect(() => {
+    if (section !== "calls") return;
+    let cancelled = false;
+    setCallsLoading(true);
+    fetch("/api/calls?limit=100" + (callFilter !== "ALL" ? "&status=" + callFilter : ""), { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load call history");
+        return response.json();
+      })
+      .then((data) => { if (!cancelled) setCallHistory(data.calls || []); })
+      .catch(() => { if (!cancelled) setCallHistory([]); })
+      .finally(() => { if (!cancelled) setCallsLoading(false); });
+    return () => { cancelled = true; };
+  }, [section, callFilter]);
+
   const writing = writingPatterns[period];
   const selectedDoctor = selected ?? doctors[0] ?? null;
 
