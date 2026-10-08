@@ -818,10 +818,17 @@ export default function Home() {
 
                 <div className="xl:col-span-7 space-y-6">
                   <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                      <div><h3 className="font-bold text-slate-800">Doctors in {patch} Patch ({doctors.length})</h3><p className="text-xs text-slate-500">Click row to open comprehensive profile & writing pattern</p></div>
-                      <div className="flex items-center gap-2"><span className="text-xs text-slate-500">Sort by:</span>
-                        <select value={sort} onChange={(e) => setSort(e.target.value)} className="text-xs bg-slate-100 px-2.5 py-1.5 rounded-lg font-medium"><option value="score">Potential Score (High to Low)</option><option value="distance">Distance (Nearest first)</option></select>
+                    <div className="mr-doctor-table-header px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+                      <div className="mr-doctor-table-heading min-w-0">
+                        <h3 className="font-bold text-slate-800">Doctors in {patch} Patch ({doctors.length})</h3>
+                        <p className="text-xs text-slate-500">Click row to open comprehensive profile & writing pattern</p>
+                      </div>
+                      <div className="mr-doctor-sort flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-slate-500">Sort by:</span>
+                        <select value={sort} onChange={(e) => setSort(e.target.value)} className="text-xs bg-slate-100 px-2.5 py-1.5 rounded-lg font-medium">
+                          <option value="score">Potential Score (High to Low)</option>
+                          <option value="distance">Distance (Nearest first)</option>
+                        </select>
                       </div>
                     </div>
                     <div className="mr-desktop-table overflow-x-auto">
