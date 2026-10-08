@@ -24,6 +24,28 @@ export async function GET(request: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
+  if (doctorId) {
+    const parsedDoctorId = z.string().uuid().safeParse(doctorId);
+    if (!parsedDoctorId.success) {
+      return NextResponse.json({ error: "Invalid doctor id" }, { status: 400 });
+    }
+  }
+
+  if (status && !statuses.includes(status as typeof statuses[number])) {
+    return NextResponse.json({ error: "Invalid plan status" }, { status: 400 });
+  }
+
+  const parsedFrom = from ? new Date(from) : null;
+  const parsedTo = to ? new Date(to) : null;
+
+  if ((parsedFrom && Number.isNaN(parsedFrom.getTime())) || (parsedTo && Number.isNaN(parsedTo.getTime()))) {
+    return NextResponse.json({ error: "Invalid plan date filter" }, { status: 400 });
+  }
+
+  if (parsedFrom && parsedTo && parsedFrom > parsedTo) {
+    return NextResponse.json({ error: "Plan date range is invalid" }, { status: 400 });
+  }
+
   const plans = await prisma.plan.findMany({
     where: {
       userId: user.id,
@@ -31,8 +53,8 @@ export async function GET(request: NextRequest) {
       ...(status && statuses.includes(status as typeof statuses[number]) ? { status } : {}),
       ...(from || to ? {
         plannedFor: {
-          ...(from ? { gte: new Date(from) } : {}),
-          ...(to ? { lte: new Date(to) } : {})
+          ...(parsedFrom ? { gte: parsedFrom } : {}),
+          ...(parsedTo ? { lte: parsedTo } : {})
         }
       } : {})
     },
