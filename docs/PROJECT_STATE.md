@@ -106,6 +106,12 @@ Important source-derived demo values:
 - The API explicitly returns `doctorSpecific: false`: the supplied prototype does not provide enough underlying event data to claim these percentages are individual-doctor prescribing analytics.
 - Seed data upserts the same source snapshots for repeatable development setup.
 
+## Profile-data integrity milestone
+
+- Removed unsupported hardcoded Monthly Scripts, Conversion, Next Best Action, verified schedule, and doctor-to-chemist claims from the deep profile.
+- These fields now explicitly show unavailable/not tracked until corresponding persisted domain data exists.
+- This keeps the prototype visual language while preventing demo values from being presented as live business intelligence.
+
 ## Immediate next steps
 1. Run a full local/Vercel build validation against the current development branch; the connected environment cannot currently execute a networked npm install/build. The login page now wraps its `useSearchParams()` consumer in `Suspense`, matching the Next.js App Router guidance.
 2. Verify the seed path after the Prisma field-to-column mapping alignment.
