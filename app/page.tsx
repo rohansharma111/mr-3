@@ -53,6 +53,13 @@ const execution = [
   ["targets", "▤", "Targets"], ["reports", "▤", "Reports"], ["notifications", "◉", "Notifications"]
 ] as const;
 
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return year + "-" + month + "-" + day;
+};
+
 const writingPatterns = {
   "This Month": {
     categories: [["Pain Relievers",45],["Antibiotics",20],["Gastro Medicines",16],["Vitamins / Supplements",12],["Others",7]],
@@ -106,11 +113,11 @@ export default function Home() {
   const [sampleFilter, setSampleFilter] = useState("ALL");
   const [targetPeriodStart, setTargetPeriodStart] = useState(() => {
     const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+    return formatLocalDate(new Date(d.getFullYear(), d.getMonth(), 1));
   });
   const [targetPeriodEnd, setTargetPeriodEnd] = useState(() => {
     const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10);
+    return formatLocalDate(new Date(d.getFullYear(), d.getMonth() + 1, 0));
   });
   const [targetData, setTargetData] = useState<TargetData | null>(null);
   const [targetsLoading, setTargetsLoading] = useState(false);
