@@ -172,7 +172,7 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - AI input is validated and capped; provider requests have a timeout and provider errors are returned without exposing provider internals.
 - AI instructions explicitly prohibit invented MR 3.0 facts, hidden-prompt disclosure, diagnosis/prescribing and unsupported clinical claims.
 - AI queries are audited without storing the user's question text.
-- AI Support is limited to 20 requests per authenticated user per rolling one-minute window using a persistent PostgreSQL bucket; 429 responses include Retry-After and rate-limit headers.
+- AI Support is limited to 20 requests per authenticated user per fixed one-minute window using a persistent PostgreSQL bucket; 429 responses include Retry-After and rate-limit headers.
 - The rate limiter requires the `rate_limit_buckets` migration before AI requests can run successfully.
 - OPENAI_MODEL is now explicitly required instead of relying on an unverified default model name.
 - The AI Support UI now sends real requests, supports the prototype prompt chips, shows loading/errors and labels responses as grounded in MR 3.0 operational data.
