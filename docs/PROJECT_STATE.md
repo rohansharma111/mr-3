@@ -308,4 +308,10 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - API routes retain the existing security header set while ensuring authenticated operational data is not intentionally cached or indexed by compliant intermediaries/crawlers.
 - No database schema or business behavior changed in this increment.
 - This is a defense-in-depth measure; local typecheck/build validation is still pending.
-
+## API input validation hardening milestone
+- Hardened Stockist Data filters: malformed product UUIDs and oversized/blank molecule filters now return controlled HTTP 400 responses.
+- Hardened Notifications: the `unread` query accepts only `true` or `false`, and PATCH requests can no longer submit both a notification id and `markAllRead` simultaneously.
+- Hardened Reports and Targets date filters with strict YYYY-MM-DD validation plus calendar-date round-trip validation, preventing silently normalized invalid dates from reaching database queries.
+- No schema or business-data changes were made in this increment.
+- Full local typecheck/build validation remains pending because the connected environment cannot run the repository's networked npm/Prisma toolchain reliably.
+\n
