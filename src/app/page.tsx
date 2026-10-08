@@ -55,6 +55,11 @@ export default function Home() {
   const [period, setPeriod] = useState<"This Month" | "Last 3 Months">("Last 3 Months");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [callOpen, setCallOpen] = useState(false);
+  const [callOutcome, setCallOutcome] = useState("Positive on product discussion");
+  const [callNotes, setCallNotes] = useState("");
+  const [callSaving, setCallSaving] = useState(false);
+  const [callMessage, setCallMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -219,7 +224,7 @@ export default function Home() {
 
           {section === "potential" && selectedDoctor && (
             <section className="space-y-6">
-              <div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2><p className="text-sm text-slate-500">Detailed performance & prescribing insights</p></div><div className="flex gap-2"><button className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button><button className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button></div></div>
+              <div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2><p className="text-sm text-slate-500">Detailed performance & prescribing insights</p></div><div className="flex gap-2"><button className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button><button onClick={() => { setCallMessage(""); setCallNotes(""); setCallOpen(true); }} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button></div></div>
               <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 rounded-2xl shadow-md"><h3 className="text-xl font-black">{selectedDoctor.name}<span className="ml-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] uppercase font-bold px-2 py-1 rounded-full">{selectedDoctor.potential} Potential</span></h3><p className="text-blue-200 text-sm mt-1">{selectedDoctor.spec} · {selectedDoctor.clinic}</p><p className="text-xs text-slate-300 mt-2">📍 {selectedDoctor.loc} · {selectedDoctor.dist}</p></div>
               <div className="grid xl:grid-cols-12 gap-5">
                 <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex gap-5 border-b border-slate-100 pb-4 mb-5"><button className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-3 text-sm">Overview</button><button className="text-slate-500 text-sm pb-3">Prescribing</button><button className="text-slate-500 text-sm pb-3">History</button><button className="text-slate-500 text-sm pb-3">Insights</button></div><div className="grid grid-cols-3 gap-3">{[["Potential Score",selectedDoctor.score+"/100"],["Monthly Scripts","185"],["Conversion","18.2%"]].map(([a,b])=><div key={a} className="bg-slate-50 rounded-xl p-4"><div className="text-xs uppercase tracking-wider text-slate-400">{a}</div><div className="text-2xl font-black mt-1">{b}</div></div>)}</div><div className="mt-5 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900"><b>🎯 Next Best Action</b><p className="mt-1">Pitch High-Intensity statin combination on Thursday.</p></div></div>
@@ -240,6 +245,39 @@ export default function Home() {
 
           {!["explorer","potential","ai","stockist"].includes(section) && (
             <section className="space-y-4"><h2 className="text-2xl font-black text-slate-900">{execution.find(x => x[0] === section)?.[2]}</h2><p className="text-sm text-slate-500">Module boundary established; persistent workflow is next.</p><div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">This module is intentionally being connected to the production data model instead of remaining an alert placeholder.</div></section>
+          )}
+
+          {callOpen && selectedDoctor && (
+            <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="call-dialog-title">
+              <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
+                  <div><h3 id="call-dialog-title" className="text-lg font-black text-slate-900">Log Call</h3><p className="text-xs text-slate-500 mt-1">{selectedDoctor.name} · {selectedDoctor.clinic}</p></div>
+                  <button onClick={() => setCallOpen(false)} disabled={callSaving} className="text-slate-400 hover:text-slate-700 text-xl" aria-label="Close">×</button>
+                </div>
+                <form className="p-6 space-y-4" onSubmit={async (event) => {
+                  event.preventDefault();
+                  setCallSaving(true); setCallMessage("");
+                  try {
+                    const response = await fetch("/api/calls", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ doctorId: selectedDoctor.id, outcome: callOutcome, notes: callNotes, status: "COMPLETED" })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || "Unable to log call");
+                    setCallMessage("Call logged successfully and added to the audit trail.");
+                    setTimeout(() => setCallOpen(false), 900);
+                  } catch (e) {
+                    setCallMessage(e instanceof Error ? e.message : "Unable to log call");
+                  } finally { setCallSaving(false); }
+                }}>
+                  <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Outcome</label><select value={callOutcome} onChange={(e) => setCallOutcome(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white"><option>Positive on product discussion</option><option>Requested follow-up</option><option>Samples requested</option><option>Not interested</option><option>Doctor unavailable</option></select></div>
+                  <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Notes</label><textarea value={callNotes} onChange={(e) => setCallNotes(e.target.value)} maxLength={5000} rows={5} placeholder="Record the key discussion, objection or next action..." className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none outline-none focus:border-blue-500" /></div>
+                  {callMessage && <div className={"rounded-xl px-3 py-2.5 text-xs font-semibold " + (callMessage.startsWith("Call logged") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>{callMessage}</div>}
+                  <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setCallOpen(false)} disabled={callSaving} className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700">Cancel</button><button type="submit" disabled={callSaving} className="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white disabled:opacity-60">{callSaving ? "Saving…" : "Save Call"}</button></div>
+                </form>
+              </div>
+            </div>
           )}
 
           <footer className="mt-8 bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"><div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600"><span>Total Doctors: <b className="text-slate-900">1,243</b></span><span>High Potential: <b className="text-emerald-600">312 (25.1%)</b></span><span>Total Calls: <b className="text-slate-900">156</b></span><span>Samples: <b className="text-slate-900">320</b></span><span>Conversion Rate: <b className="text-blue-600">18.2%</b></span><span>Top Specialty: <b className="text-slate-900">Cardiologists (42%)</b></span><span>Top Molecule: <b className="text-slate-900">Aceclofenac + Paracetamol</b></span></div><button onClick={() => setSection("plan")} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl">Go to My Plan →</button></footer>
