@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
 
   const { patch, specialty, q, sort } = parsed.data;
 
+  try {
   const doctors = await prisma.doctor.findMany({
     where: {
       isActive: true,
@@ -59,4 +60,7 @@ export async function GET(request: NextRequest) {
       ? { x: Number(doctor.mapX), y: Number(doctor.mapY) }
       : null
   })));
+  } catch {
+    return NextResponse.json({ error: "Unable to load doctors" }, { status: 500 });
+  }
 }
