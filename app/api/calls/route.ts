@@ -18,6 +18,13 @@ export async function GET(request: NextRequest) {
 
   const doctorId = new URL(request.url).searchParams.get("doctorId");
 
+  if (doctorId) {
+    const parsedDoctorId = z.string().uuid().safeParse(doctorId);
+    if (!parsedDoctorId.success) {
+      return NextResponse.json({ error: "Invalid doctor id" }, { status: 400 });
+    }
+  }
+
   const calls = await prisma.call.findMany({
     where: doctorId ? { doctorId, userId: user.id } : { userId: user.id },
     include: {
