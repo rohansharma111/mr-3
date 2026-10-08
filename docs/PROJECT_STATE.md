@@ -115,3 +115,20 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Added the missing `src/lib/prisma.ts` singleton used by the API routes.
 - Added `postinstall: prisma generate` for Vercel build reliability.
 - Added root `vercel.json` with Git automatic deployments disabled. Manual deployments remain the intended deployment mechanism.
+
+## Reports and Notifications milestone
+- Added `app/api/reports/route.ts` with period-based reporting from persisted Calls, Samples, Plans and Targets.
+- Reports expose call status totals, sample issues/units, plan status totals, top doctors by completed calls, and top products by issued sample units.
+- Conversion actuals remain explicitly unavailable because the current domain model does not contain conversion events.
+- Added persistent `notifications` table and Prisma `Notification` model.
+- Added `app/api/notifications/route.ts` for user-scoped listing, unread counts, mark-one-read and mark-all-read.
+- Call logging, plan changes, sample changes and target changes now generate persisted notifications.
+- Added Reports and Notifications UI while preserving the prototype's visual language.
+- Removed the duplicate inactive `src/app` application tree. The active Next.js application is now consistently under the root `app/` directory.
+- Root `app/layout.tsx` and `app/globals.css` are now present, and all API routes used by the UI are under root `app/api/`.
+
+## Vercel deployment policy
+- `vercel.json` contains `git.deploymentEnabled: false`.
+- Git commits are development/version-control actions only; the intended production workflow is manual Vercel deployment.
+- Vercel documents `git.deploymentEnabled: false` as the configuration for disabling Git-triggered automatic deployments. A manual deployment from the Vercel dashboard or CLI remains available. citeturn1search1turn1search0
+- Because the Vercel project was just created, perform the first deployment manually so the project establishes the repository configuration. After that, future commits should not be used as deployment triggers.
