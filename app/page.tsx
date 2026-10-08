@@ -218,6 +218,8 @@ export default function Home() {
   const [aiInput, setAiInput] = useState("");
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const selectedDoctor = selected ?? doctors[0] ?? null;
+
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([
     {
       role: "assistant",
@@ -635,8 +637,6 @@ export default function Home() {
   };
 
   const writing = writingPattern ?? { categories: [], molecules: [], insight: "Writing pattern data is unavailable.", sourceLabel: "UNAVAILABLE", doctorSpecific: false };
-  const selectedDoctor = selected ?? doctors[0] ?? null;
-
   const mapPoints = useMemo(
     () => doctors
       .filter((doctor) => doctor.coords !== null)
