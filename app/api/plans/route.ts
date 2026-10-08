@@ -101,6 +101,15 @@ export async function POST(request: NextRequest) {
         metadata: { doctorId: doctor.id, plannedFor: plannedFor.toISOString(), priority: created.priority }
       }
     });
+    await tx.notification.create({
+      data: {
+        userId: user.id,
+        type: "PLAN",
+        title: "Visit added to My Plan",
+        message: `${doctor.name} is planned for ${plannedFor.toLocaleString()}.`,
+        actionUrl: "/?section=plan"
+      }
+    });
     return created;
   });
 
@@ -135,6 +144,15 @@ export async function PATCH(request: NextRequest) {
     });
     await tx.auditLog.create({
       data: { userId: user.id, action: "UPDATE", entityType: "PLAN", entityId: updated.id, metadata: { status: updated.status } }
+    });
+    await tx.notification.create({
+      data: {
+        userId: user.id,
+        type: "PLAN",
+        title: "Plan updated",
+        message: `${existing.status} → ${updated.status} for your planned visit.`,
+        actionUrl: "/?section=plan"
+      }
     });
     return updated;
   });
