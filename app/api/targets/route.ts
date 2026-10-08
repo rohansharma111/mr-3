@@ -121,7 +121,9 @@ export async function POST(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const target = await prisma.$transaction(async (tx) => {
+  let target;
+  try {
+    target = await prisma.$transaction(async (tx) => {
     const existing = await tx.target.findFirst({
       where: { userId: user.id, periodStart: start, periodEnd: end }
     });
@@ -173,7 +175,10 @@ export async function POST(request: NextRequest) {
     });
 
     return saved;
-  });
+    });
+  } catch {
+    return NextResponse.json({ error: "Unable to save target" }, { status: 500 });
+  }
 
   return NextResponse.json({
     id: target.id,
