@@ -155,3 +155,10 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Run `npx prisma migrate deploy` against the development database.
 - Set a development password with `MR3_USER_EMAIL=... MR3_USER_PASSWORD=... npm run auth:set-password`.
 - Start with `npm run dev`.
+
+## Stockist milestone
+
+- Added authenticated `GET /api/stockists` backed by `stockists` and `stockist_inventory`.
+- Replaced the prototype's hardcoded stockist table with a database-backed Stockist Data panel.
+- Current development data exposes the four source-derived stockists and inventory for the Aceclofenac + Paracetamol molecule.
+- Inventory quantities/statuses remain read-only for now; mutation workflows will be added only when the product requirements define the stockist update process.
