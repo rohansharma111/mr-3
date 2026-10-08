@@ -13,7 +13,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = new URL(request.url);
+  try {
+    const url = new URL(request.url);
   const parsed = querySchema.safeParse({ period: url.searchParams.get("period") ?? undefined });
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid writing pattern period" }, { status: 400 });
@@ -35,4 +36,7 @@ export async function GET(request: Request) {
     sourceLabel: snapshot.sourceLabel,
     doctorSpecific: false
   });
+  } catch {
+    return NextResponse.json({ error: "Unable to load writing pattern" }, { status: 500 });
+  }
 }
