@@ -5,13 +5,32 @@ enum Role { ADMIN MANAGER FIELD_MANAGER ANALYST }
 enum Potential { HIGH MEDIUM LOW }
 enum CallStatus { PLANNED COMPLETED MISSED CANCELLED }
 
-model User { id String @id @default(uuid()) name String email String @unique role Role @default(FIELD_MANAGER) isActive Boolean @default(true) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt calls Call[] samples SampleIssue[] targets Target[] auditLogs AuditLog[] @@map("app_users") }
+model User { id String @id @default(uuid()) name String email String @unique role Role @default(FIELD_MANAGER) isActive Boolean @default(true) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt calls Call[] samples SampleIssue[] targets Target[] plans Plan[] auditLogs AuditLog[] @@map("app_users") }
 model Patch { id String @id @default(uuid()) name String @unique doctorCount Int @default(0) isDemo Boolean @default(true) doctors DoctorPatch[] createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@map("patches") }
 model Specialty { id String @id @default(uuid()) name String @unique doctors Doctor[] @@map("specialties") }
-model Doctor { id String @id @default(uuid()) name String specialtyId String? specialty Specialty? @relation(fields:[specialtyId],references:[id]) clinic String location String score Int @default(0) potential Potential @default(MEDIUM) distanceKm Decimal? latitude Decimal? longitude Decimal? isActive Boolean @default(true) isDemo Boolean @default(true) patches DoctorPatch[] calls Call[] samples SampleIssue[] createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@map("doctors") @@index([specialtyId]) @@index([potential,score]) }
+model Doctor { id String @id @default(uuid()) name String specialtyId String? specialty Specialty? @relation(fields:[specialtyId],references:[id]) clinic String location String score Int @default(0) potential Potential @default(MEDIUM) distanceKm Decimal? latitude Decimal? longitude Decimal? isActive Boolean @default(true) isDemo Boolean @default(true) patches DoctorPatch[] calls Call[] samples SampleIssue[] plans Plan[] createdAt DateTime @default(now()) updatedAt DateTime @updatedAt @@map("doctors") @@index([specialtyId]) @@index([potential,score]) }
 model DoctorPatch { doctorId String doctor Doctor @relation(fields:[doctorId],references:[id],onDelete:Cascade) patchId String patch Patch @relation(fields:[patchId],references:[id],onDelete:Cascade) @@id([doctorId,patchId]) @@map("doctor_patches") }
 model Product { id String @id @default(uuid()) name String @unique molecule String? category String? isActive Boolean @default(true) isDemo Boolean @default(true) calls Call[] samples SampleIssue[] @@map("products") }
 model Call { id String @id @default(uuid()) doctorId String doctor Doctor @relation(fields:[doctorId],references:[id]) userId String? user User? @relation(fields:[userId],references:[id]) productId String? product Product? @relation(fields:[productId],references:[id]) status CallStatus @default(COMPLETED) outcome String? notes String? calledAt DateTime @default(now()) isDemo Boolean @default(true) @@index([doctorId,calledAt]) @@index([userId,calledAt]) }
+model Plan {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  doctorId String
+  doctor Doctor @relation(fields:[doctorId],references:[id],onDelete:Cascade)
+  plannedFor DateTime
+  priority String @default("NORMAL")
+  objective String @default("")
+  status String @default("PLANNED")
+  notes String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId,doctorId,plannedFor])
+  @@index([userId,plannedFor])
+  @@index([doctorId,plannedFor])
+  @@index([status,plannedFor])
+  @@map("plans")
+}
 model SampleIssue { id String @id @default(uuid()) doctorId String doctor Doctor @relation(fields:[doctorId],references:[id]) productId String? product Product? @relation(fields:[productId],references:[id]) userId String? user User? @relation(fields:[userId],references:[id]) quantity Int status String @default("ISSUED") issuedAt DateTime @default(now()) isDemo Boolean @default(true) @@map("sample_issues") }
 model Stockist { id String @id @default(uuid()) name String @unique location String isActive Boolean @default(true) isDemo Boolean @default(true) inventory StockistInventory[] @@map("stockists") }
 model StockistInventory { id String @id @default(uuid()) stockistId String stockist Stockist @relation(fields:[stockistId],references:[id],onDelete:Cascade) productId String product Product @relation(fields:[productId],references:[id]) quantity Int @default(0) unit String @default("strips") status String @default("GOOD") updatedAt DateTime @updatedAt @@unique([stockistId,productId]) @@map("stockist_inventory") }
