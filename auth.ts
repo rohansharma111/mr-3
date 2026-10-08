@@ -25,20 +25,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
-        if (!parsed.success) return null;
+        if (!parsed.success) {
+          console.error("[AUTH DEBUG] invalid credential format");
+          return null;
+        }
+
+        const email = parsed.data.email.toLowerCase();
 
         const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email.toLowerCase() }
+          where: { email }
         });
 
-        if (!user?.isActive || !user.passwordHash) return null;
+        if (!user) {
+          console.error("[AUTH DEBUG] user not found", { email });
+          return null;
+        }
+
+        if (!user.isActive) {
+          console.error("[AUTH DEBUG] user inactive", { email });
+          return null;
+        }
+
+        if (!user.passwordHash) {
+          console.error("[AUTH DEBUG] password hash missing", { email });
+          return null;
+        }
 
         const passwordValid = await bcrypt.compare(
           parsed.data.password,
           user.passwordHash
         );
 
-        if (!passwordValid) return null;
+        if (!passwordValid) {
+          console.error("[AUTH DEBUG] password mismatch", { email });
+          return null;
+        }
+
+        console.info("[AUTH DEBUG] password verified", { email });
 
         return {
           id: user.id,
