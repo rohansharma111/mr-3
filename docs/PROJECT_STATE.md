@@ -79,7 +79,7 @@ Important source-derived demo values:
 - Samples are persistent and auditable.
 - Targets are now persistent: period-based targets can be created/updated and actual completed calls/sample units are calculated from activity.
 - Conversion actuals are intentionally shown as unavailable because the current domain model has no conversion event/outcome entity.
-- Reports and Notifications remain placeholders.
+- Reports and Notifications are now implemented.
 - Some prototype KPI and profile values remain hardcoded because their underlying domain/analytics models have not yet been fully implemented.
 
 ## Immediate next steps
@@ -130,5 +130,5 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 ## Vercel deployment policy
 - `vercel.json` contains `git.deploymentEnabled: false`.
 - Git commits are development/version-control actions only; the intended production workflow is manual Vercel deployment.
-- Vercel documents `git.deploymentEnabled: false` as the configuration for disabling Git-triggered automatic deployments. A manual deployment from the Vercel dashboard or CLI remains available. citeturn1search1turn1search0
+- Vercel documents `git.deploymentEnabled: false` as the configuration for disabling Git-triggered automatic deployments. A manual deployment from the Vercel dashboard or CLI remains available.
 - Because the Vercel project was just created, perform the first deployment manually so the project establishes the repository configuration. After that, future commits should not be used as deployment triggers.
