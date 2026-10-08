@@ -81,6 +81,15 @@ export async function POST(request: NextRequest) {
         metadata: { doctorId: doctor.id, productId: product.id, quantity: created.quantity, status: created.status }
       }
     });
+    await tx.notification.create({
+      data: {
+        userId: user.id,
+        type: "SAMPLE",
+        title: "Samples issued",
+        message: `${created.quantity} sample unit(s) issued for ${doctor.name}.`,
+        actionUrl: "/?section=samples"
+      }
+    });
     return created;
   });
 
@@ -108,6 +117,15 @@ export async function PATCH(request: NextRequest) {
     const result = await tx.sampleIssue.update({ where: { id: existing.id }, data: { status: parsed.data.status } });
     await tx.auditLog.create({
       data: { userId: user.id, action: "UPDATE", entityType: "SAMPLE_ISSUE", entityId: result.id, metadata: { status: result.status } }
+    });
+    await tx.notification.create({
+      data: {
+        userId: user.id,
+        type: "SAMPLE",
+        title: "Sample status updated",
+        message: `Sample issue status changed to ${result.status}.`,
+        actionUrl: "/?section=samples"
+      }
     });
     return result;
   });
