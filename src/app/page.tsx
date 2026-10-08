@@ -2,6 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+type Product = { id: string; name: string; molecule: string | null; category: string | null };
+
+type SampleIssue = {
+  id: string; doctorId: string; doctorName: string; specialty: string;
+  productId: string; productName: string; molecule: string; quantity: number;
+  status: "ISSUED" | "RETURNED" | "CANCELLED"; issuedAt: string;
+};
+
 type Plan = {
   id: string; doctorId: string; doctorName: string; clinic: string; location: string; specialty: string;
   score: number; potential: "HIGH" | "MEDIUM" | "LOW"; plannedFor: string;
@@ -80,6 +88,71 @@ export default function Home() {
   const [planPriority, setPlanPriority] = useState<Plan["priority"]>("NORMAL");
   const [planObjective, setPlanObjective] = useState("");
   const [planNotes, setPlanNotes] = useState("");
+  const [samples, setSamples] = useState<SampleIssue[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [samplesLoading, setSamplesLoading] = useState(false);
+  const [sampleOpen, setSampleOpen] = useState(false);
+  const [sampleSaving, setSampleSaving] = useState(false);
+  const [sampleMessage, setSampleMessage] = useState("");
+  const [sampleProductId, setSampleProductId] = useState("");
+  const [sampleQuantity, setSampleQuantity] = useState(5);
+  const [sampleFilter, setSampleFilter] = useState("ALL");
+
+  useEffect(() => {
+    fetch("/api/products", { cache: "no-store" })
+      .then(r => r.json())
+      .then(data => setProducts(data.products || []))
+      .catch(() => setProducts([]));
+  }, []);
+
+  useEffect(() => {
+    if (section !== "samples") return;
+    let cancelled = false;
+    setSamplesLoading(true);
+    fetch("/api/samples?limit=100" + (sampleFilter !== "ALL" ? "&status=" + sampleFilter : ""), { cache: "no-store" })
+      .then(async r => { if (!r.ok) throw new Error("Unable to load samples"); return r.json(); })
+      .then(data => { if (!cancelled) setSamples(data.samples || []); })
+      .catch(() => { if (!cancelled) setSamples([]); })
+      .finally(() => { if (!cancelled) setSamplesLoading(false); });
+    return () => { cancelled = true; };
+  }, [section, sampleFilter]);
+
+  const openSampleDialog = (doctor: Doctor) => {
+    setSelected(doctor);
+    setSampleProductId(products[0]?.id || "");
+    setSampleQuantity(5);
+    setSampleMessage("");
+    setSampleOpen(true);
+  };
+
+  const saveSample = async () => {
+    if (!selectedDoctor || !sampleProductId || sampleQuantity < 1) return;
+    setSampleSaving(true); setSampleMessage("");
+    try {
+      const response = await fetch("/api/samples", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ doctorId: selectedDoctor.id, productId: sampleProductId, quantity: sampleQuantity })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to issue samples");
+      setSampleOpen(false);
+      setSection("samples");
+    } catch (e) {
+      setSampleMessage(e instanceof Error ? e.message : "Unable to issue samples");
+    } finally {
+      setSampleSaving(false);
+    }
+  };
+
+  const updateSampleStatus = async (id: string, status: SampleIssue["status"]) => {
+    const response = await fetch("/api/samples", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status })
+    });
+    if (!response.ok) return;
+    setSamples(current => current.map(sample => sample.id === id ? { ...sample, status } : sample));
+  };
 
   useEffect(() => {
     if (section !== "plan") return;
@@ -301,7 +374,7 @@ export default function Home() {
 
           {section === "potential" && selectedDoctor && (
             <section className="space-y-6">
-              <div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2><p className="text-sm text-slate-500">Detailed performance & prescribing insights</p></div><div className="flex gap-2"><button onClick={() => openPlanDialog(selectedDoctor)} className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button><button onClick={() => { setCallMessage(""); setCallNotes(""); setCallOpen(true); }} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button></div></div>
+              <div className="flex items-center justify-between"><div><h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2><p className="text-sm text-slate-500">Detailed performance & prescribing insights</p></div><div className="flex gap-2"><div className="flex gap-2"><button onClick={() => openPlanDialog(selectedDoctor)} className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button><button onClick={() => openSampleDialog(selectedDoctor)} className="bg-white border border-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">□ Issue Samples</button></div><button onClick={() => { setCallMessage(""); setCallNotes(""); setCallOpen(true); }} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button></div></div>
               <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 rounded-2xl shadow-md"><h3 className="text-xl font-black">{selectedDoctor.name}<span className="ml-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] uppercase font-bold px-2 py-1 rounded-full">{selectedDoctor.potential} Potential</span></h3><p className="text-blue-200 text-sm mt-1">{selectedDoctor.spec} · {selectedDoctor.clinic}</p><p className="text-xs text-slate-300 mt-2">📍 {selectedDoctor.loc} · {selectedDoctor.dist}</p></div>
               <div className="grid xl:grid-cols-12 gap-5">
                 <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm"><div className="flex gap-5 border-b border-slate-100 pb-4 mb-5"><button className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-3 text-sm">Overview</button><button className="text-slate-500 text-sm pb-3">Prescribing</button><button className="text-slate-500 text-sm pb-3">History</button><button className="text-slate-500 text-sm pb-3">Insights</button></div><div className="grid grid-cols-3 gap-3">{[["Potential Score",selectedDoctor.score+"/100"],["Monthly Scripts","185"],["Conversion","18.2%"]].map(([a,b])=><div key={a} className="bg-slate-50 rounded-xl p-4"><div className="text-xs uppercase tracking-wider text-slate-400">{a}</div><div className="text-2xl font-black mt-1">{b}</div></div>)}</div><div className="mt-5 bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-900"><b>🎯 Next Best Action</b><p className="mt-1">Pitch High-Intensity statin combination on Thursday.</p></div>
@@ -359,7 +432,16 @@ export default function Home() {
             </section>
           )}
 
-          {!["explorer","potential","ai","stockist","calls"].includes(section) && (
+          {section === "samples" && (
+            <section className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4"><div><h2 className="text-2xl font-black text-slate-900">Samples</h2><p className="text-sm text-slate-500">Track product samples issued to doctors</p></div><div className="flex gap-2"><select value={sampleFilter} onChange={e=>setSampleFilter(e.target.value)} className="text-xs font-semibold bg-white border border-slate-200 px-3 py-2 rounded-xl"><option value="ALL">All statuses</option><option value="ISSUED">Issued</option><option value="RETURNED">Returned</option><option value="CANCELLED">Cancelled</option></select><button onClick={()=>setSection("explorer")} className="bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl">＋ Issue Sample</button></div></div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[["Issued",samples.filter(s=>s.status==="ISSUED").length],["Units Issued",samples.filter(s=>s.status==="ISSUED").reduce((n,s)=>n+s.quantity,0)],["Returned",samples.filter(s=>s.status==="RETURNED").length],["Doctors",new Set(samples.map(s=>s.doctorId)).size]].map(([label,value])=><div key={String(label)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><div className="text-xs uppercase tracking-wider font-semibold text-slate-400">{label}</div><div className="text-2xl font-black mt-1">{value}</div></div>)}</div>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"><div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between"><div><h3 className="font-bold">Sample Issues</h3><p className="text-xs text-slate-500 mt-1">Every issue is persisted and auditable.</p></div><button onClick={()=>setSampleFilter(sampleFilter)} className="text-xs text-blue-600 font-bold">↻ Refresh</button></div>
+              {samplesLoading?<div className="p-10 text-center text-sm text-slate-500">Loading sample history…</div>:samples.length===0?<div className="p-10 text-center text-sm text-slate-500">No sample issues found.</div>:<div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500"><tr><th className="p-3">Doctor</th><th className="p-3">Product</th><th className="p-3">Quantity</th><th className="p-3">Status</th><th className="p-3">Issued</th><th className="p-3">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{samples.map(sample=><tr key={sample.id} className="hover:bg-slate-50"><td className="p-3"><b>{sample.doctorName}</b><div className="text-xs text-slate-500">{sample.specialty}</div></td><td className="p-3"><b>{sample.productName}</b><div className="text-xs text-slate-500">{sample.molecule}</div></td><td className="p-3 font-mono">{sample.quantity}</td><td className="p-3"><span className={(sample.status==="ISSUED"?"bg-blue-100 text-blue-800":sample.status==="RETURNED"?"bg-emerald-100 text-emerald-800":"bg-slate-100 text-slate-700")+" text-xs font-bold px-2 py-1 rounded-full"}>{sample.status}</span></td><td className="p-3 whitespace-nowrap text-xs text-slate-500">{new Date(sample.issuedAt).toLocaleString()}</td><td className="p-3">{sample.status==="ISSUED"&&<><button onClick={()=>updateSampleStatus(sample.id,"RETURNED")} className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg mr-1">Return</button><button onClick={()=>updateSampleStatus(sample.id,"CANCELLED")} className="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-lg">Cancel</button></>}</td></tr>)}</tbody></table></div>}</div>
+            </section>
+          )}
+
+          {!["explorer","potential","ai","stockist","calls","plan","samples"].includes(section) && (
             <section className="space-y-4"><h2 className="text-2xl font-black text-slate-900">{execution.find(x => x[0] === section)?.[2]}</h2><p className="text-sm text-slate-500">Module boundary established; persistent workflow is next.</p><div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">This module is intentionally being connected to the production data model instead of remaining an alert placeholder.</div></section>
           )}
 
@@ -368,6 +450,14 @@ export default function Home() {
               <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between"><div><h3 className="font-black text-slate-900">Add to My Plan</h3><p className="text-xs text-slate-500 mt-1">{selectedDoctor.name} · {selectedDoctor.clinic}</p></div><button onClick={()=>setPlanOpen(false)} className="text-slate-400 hover:text-slate-700 text-xl">×</button></div>
               <div className="p-5 space-y-4"><div className="grid grid-cols-2 gap-3"><label className="text-xs font-bold text-slate-600">Visit Date<input type="date" value={planDate} onChange={e=>setPlanDate(e.target.value)} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"/></label><label className="text-xs font-bold text-slate-600">Visit Time<input type="time" value={planTime} onChange={e=>setPlanTime(e.target.value)} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"/></label></div><label className="block text-xs font-bold text-slate-600">Priority<select value={planPriority} onChange={e=>setPlanPriority(e.target.value as Plan["priority"])} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option value="LOW">Low</option><option value="NORMAL">Normal</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></select></label><label className="block text-xs font-bold text-slate-600">Visit Objective<input value={planObjective} onChange={e=>setPlanObjective(e.target.value)} maxLength={500} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="What should this visit achieve?"/></label><label className="block text-xs font-bold text-slate-600">Notes<textarea value={planNotes} onChange={e=>setPlanNotes(e.target.value)} maxLength={5000} rows={3} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none" placeholder="Optional preparation notes"/></label>{planMessage&&<div className="text-xs font-semibold text-red-600">{planMessage}</div>}</div>
               <div className="px-5 py-4 border-t border-slate-200 flex justify-end gap-2"><button onClick={()=>setPlanOpen(false)} className="px-4 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Cancel</button><button disabled={planSaving} onClick={savePlan} className="px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl">{planSaving?"Saving…":"Add to Plan"}</button></div>
+            </div></div>
+          )}
+
+          {sampleOpen && selectedDoctor && (
+            <div className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"><div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between"><div><h3 className="font-black text-slate-900">Issue Samples</h3><p className="text-xs text-slate-500 mt-1">{selectedDoctor.name} · {selectedDoctor.clinic}</p></div><button onClick={()=>setSampleOpen(false)} className="text-slate-400 text-xl">×</button></div>
+              <div className="p-5 space-y-4"><label className="block text-xs font-bold text-slate-600">Product<select value={sampleProductId} onChange={e=>setSampleProductId(e.target.value)} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option value="">Select product</option>{products.map(product=><option key={product.id} value={product.id}>{product.name}{product.molecule?" · "+product.molecule:""}</option>)}</select></label><label className="block text-xs font-bold text-slate-600">Quantity<input type="number" min={1} max={1000} value={sampleQuantity} onChange={e=>setSampleQuantity(Math.max(1,Math.min(1000,Number(e.target.value)||1)))} className="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"/></label>{sampleMessage&&<div className="text-xs font-semibold text-red-600">{sampleMessage}</div>}</div>
+              <div className="px-5 py-4 border-t border-slate-200 flex justify-end gap-2"><button onClick={()=>setSampleOpen(false)} className="px-4 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl">Cancel</button><button disabled={sampleSaving||!sampleProductId} onClick={saveSample} className="px-4 py-2.5 text-xs font-bold text-white bg-blue-600 disabled:opacity-50 rounded-xl">{sampleSaving?"Saving…":"Issue Samples"}</button></div>
             </div></div>
           )}
 
