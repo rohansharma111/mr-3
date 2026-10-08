@@ -206,6 +206,18 @@ Important source-derived demo values:
 - The baseline has **not** been executed yet because the connected environment cannot run the repository's networked npm/Prisma toolchain. The user should run it locally against the Neon development branch after verifying the diff is empty.
 - Do not manually insert rows into `_prisma_migrations`, and do not run the baseline command against production.
 
+## Production Neon promotion milestone
+
+- Created a recovery snapshot of the existing production branch before promotion: `mr3-production-pre-promotion-20261008` (snapshot `snap-cool-flower-b4jfgecu`).
+- Validated a temporary `production-candidate-20261008` branch copied from development before promotion.
+- The existing production branch was initially empty of MR 3.0 application tables. Because Neon snapshots are restricted to root branches, the candidate could not be promoted through the snapshot-restore workflow directly.
+- With explicit user approval, the validated candidate schema and demo records were copied into the existing production branch `br-purple-art-b42e2kzf`.
+- Production now contains the 16 MR 3.0 application tables and verified demo counts: 10 doctors, 7 patches, 5 specialties, 7 products, 10 doctor-patch memberships, 3 calls, 1 sample issue, 4 stockists, 8 inventory rows, 1 plan, 2 writing-pattern snapshots, 1 audit log, and no targets/notifications/rate-limit buckets.
+- Production was hardened with the domain checks already present in the validated development database, including role, call status, doctor score/potential, plan status/priority, sample quantity/status, inventory quantity/status and target range checks.
+- The production branch still has **no `_prisma_migrations` ledger**. Do not claim Prisma migration history is initialized or run `prisma migrate deploy` until a safe production baseline procedure has been designed and validated locally.
+- The production branch could not be protected because the current Neon plan has reached its protected-branch limit; no production protection setting was changed.
+- The temporary candidate branch remains available for verification/recovery and has not been deleted.
+
 ## Validation status
 - Neon development schema/data checks have been performed through the connected Neon integration.
 - GitHub source/tree checks have been performed.
@@ -223,7 +235,8 @@ Important source-derived demo values:
 7. Validate AI Support end-to-end once server AI credentials are configured.
 8. Add robust validation, error handling, audit logging, indexes, tests and observability.
 9. Configure development/staging/production environment variables and deployment; keep Vercel automatic Git deployments disabled.
-10. Only after these are stable, introduce real company/user data import workflows.
+10. Design and validate a production-safe Prisma migration baseline workflow before making future production schema changes through migrations.
+11. Only after these are stable, introduce real company/user data import workflows.
 
 ## Local development
 
