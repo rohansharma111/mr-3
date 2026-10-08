@@ -8,7 +8,8 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [patches, specialties] = await Promise.all([
+  try {
+    const [patches, specialties] = await Promise.all([
     prisma.patch.findMany({
       select: {
         id: true,
@@ -34,4 +35,7 @@ export async function GET() {
       name: specialty.name
     }))
   });
+  } catch {
+    return NextResponse.json({ error: "Unable to load metadata" }, { status: 500 });
+  }
 }
