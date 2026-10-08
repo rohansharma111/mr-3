@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  try {
+
   const params = new URL(request.url).searchParams;
   const now = new Date();
   const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -140,4 +142,7 @@ export async function GET(request: NextRequest) {
       message: "Conversion outcomes are not yet modeled in MR 3.0."
     }
   });
+  } catch {
+    return NextResponse.json({ error: "Unable to load data" }, { status: 500 });
+  }
 }
