@@ -51,6 +51,16 @@ function extractOutputText(payload: unknown) {
     .trim();
 }
 
+function getRequestId(request: NextRequest) {
+  return request.headers.get("x-request-id") || crypto.randomUUID();
+}
+
+function requestIdHeaders(requestId: string) {
+  return {
+    "X-Request-ID": requestId
+  };
+}
+
 export async function POST(request: NextRequest) {
   const requestId = getRequestId(request);
   const user = await getAuthenticatedUser();
