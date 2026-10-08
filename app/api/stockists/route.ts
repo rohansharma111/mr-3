@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
 
   const { productId, molecule } = parsed.data;
 
+  try {
   const stockists = await prisma.stockist.findMany({
     where: { isActive: true },
     include: {
@@ -65,4 +66,7 @@ export async function GET(request: NextRequest) {
   };
 
   return NextResponse.json({ summary, stockists: rows });
+  } catch {
+    return NextResponse.json({ error: "Unable to load stockist data" }, { status: 500 });
+  }
 }
