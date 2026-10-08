@@ -27,10 +27,12 @@ function LoginForm() {
       });
 
       if (!result?.ok) {
+        const errorCode = result?.error || "UnknownError";
+
         setError(
-          result?.error === "CredentialsSignin"
-            ? "Invalid credentials. Please check your email and password."
-            : "Unable to sign in right now. Please try again."
+          errorCode === "CredentialsSignin"
+            ? "Invalid email or password. Please check your credentials and try again."
+            : "Authentication failed. Please try again."
         );
         return;
       }
