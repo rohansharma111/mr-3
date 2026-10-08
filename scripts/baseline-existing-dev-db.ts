@@ -1,1 +1,93 @@
-import { execFileSync } from "node:child_process";\nimport { existsSync, readdirSync } from "node:fs";\nimport { resolve } from "node:path";\nimport { PrismaClient } from "@prisma/client";\n\nconst requiredEnvironment = "development";\nconst confirmation = "I_UNDERSTAND_BASELINE_EXISTING_DEV_DATABASE";\n\nif (process.env.MR3_DATABASE_ENV !== requiredEnvironment) {\n  throw new Error(\n    "Refusing to baseline: set MR3_DATABASE_ENV=development. This command is intentionally development-only."\n  );\n}\n\nif (process.env.MR3_MIGRATION_BASELINE_CONFIRM !== confirmation) {\n  throw new Error(\n    "Refusing to baseline: set MR3_MIGRATION_BASELINE_CONFIRM=" + confirmation + " after verifying DATABASE_URL points to the Neon development branch."\n  );\n}\n\nconst databaseUrl = process.env.DATABASE_URL;\nif (!databaseUrl) {\n  throw new Error("DATABASE_URL is required.");\n}\n\nconst prisma = new PrismaClient();\n\ntry {\n  const ledger = await prisma.$queryRaw<Array<{ exists: boolean }>>`\n    SELECT to_regclass('_prisma_migrations') IS NOT NULL AS exists\n  `;\n\n  if (ledger[0]?.exists) {\n    throw new Error(\n      "Prisma migration ledger already exists. Do not use this baseline command; use normal Prisma migration commands instead."\n    );\n  }\n\n  const schemaDiff = execFileSync(\n    process.platform === "win32" ? "npx.cmd" : "npx",\n    [\n      "prisma",\n      "migrate",\n      "diff",\n      "--from-url",\n      databaseUrl,\n      "--to-schema-datamodel",\n      "prisma/schema.prisma",\n      "--script"\n    ],\n    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }\n  ).trim();\n\n  if (schemaDiff.length > 0) {\n    console.error(schemaDiff);\n    throw new Error(\n      "Refusing to baseline: the database schema does not exactly match prisma/schema.prisma."\n    );\n  }\n\n  const migrationsDir = resolve(process.cwd(), "prisma", "migrations");\n  if (!existsSync(migrationsDir)) {\n    throw new Error("prisma/migrations directory not found.");\n  }\n\n  const migrations = readdirSync(migrationsDir, { withFileTypes: true })\n    .filter((entry) => entry.isDirectory())\n    .map((entry) => entry.name)\n    .sort();\n\n  if (migrations.length === 0) {\n    throw new Error("No Prisma migrations found.");\n  }\n\n  console.log(\n    "Verified current database schema matches prisma/schema.prisma. Marking " + migrations.length + " existing migrations as applied."\n  );\n\n  for (const migration of migrations) {\n    console.log("Resolving applied migration: " + migration);\n    execFileSync(\n      process.platform === "win32" ? "npx.cmd" : "npx",\n      ["prisma", "migrate", "resolve", "--applied", migration],\n      { stdio: "inherit" }\n    );\n  }\n\n  console.log(\n    "Baseline complete. The database now has a Prisma migration ledger without changing application tables."\n  );\n} finally {\n  await prisma.$disconnect();\n}\n
+import { execFileSync } from "node:child_process";
+import { existsSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
+import { PrismaClient } from "@prisma/client";
+
+const requiredEnvironment = "development";
+const confirmation = "I_UNDERSTAND_BASELINE_EXISTING_DEV_DATABASE";
+
+if (process.env.MR3_DATABASE_ENV !== requiredEnvironment) {
+  throw new Error(
+    "Refusing to baseline: set MR3_DATABASE_ENV=development. This command is intentionally development-only."
+  );
+}
+
+if (process.env.MR3_MIGRATION_BASELINE_CONFIRM !== confirmation) {
+  throw new Error(
+    "Refusing to baseline: set MR3_MIGRATION_BASELINE_CONFIRM=" + confirmation + " after verifying DATABASE_URL points to the Neon development branch."
+  );
+}
+
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is required.");
+}
+
+const prisma = new PrismaClient();
+
+try {
+  const ledger = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+    SELECT to_regclass('_prisma_migrations') IS NOT NULL AS exists
+  `;
+
+  if (ledger[0]?.exists) {
+    throw new Error(
+      "Prisma migration ledger already exists. Do not use this baseline command; use normal Prisma migration commands instead."
+    );
+  }
+
+  const schemaDiff = execFileSync(
+    process.platform === "win32" ? "npx.cmd" : "npx",
+    [
+      "prisma",
+      "migrate",
+      "diff",
+      "--from-url",
+      databaseUrl,
+      "--to-schema-datamodel",
+      "prisma/schema.prisma",
+      "--script"
+    ],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }
+  ).trim();
+
+  if (schemaDiff.length > 0) {
+    console.error(schemaDiff);
+    throw new Error(
+      "Refusing to baseline: the database schema does not exactly match prisma/schema.prisma."
+    );
+  }
+
+  const migrationsDir = resolve(process.cwd(), "prisma", "migrations");
+  if (!existsSync(migrationsDir)) {
+    throw new Error("prisma/migrations directory not found.");
+  }
+
+  const migrations = readdirSync(migrationsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+
+  if (migrations.length === 0) {
+    throw new Error("No Prisma migrations found.");
+  }
+
+  console.log(
+    "Verified current database schema matches prisma/schema.prisma. Marking " + migrations.length + " existing migrations as applied."
+  );
+
+  for (const migration of migrations) {
+    console.log("Resolving applied migration: " + migration);
+    execFileSync(
+      process.platform === "win32" ? "npx.cmd" : "npx",
+      ["prisma", "migrate", "resolve", "--applied", migration],
+      { stdio: "inherit" }
+    );
+  }
+
+  console.log(
+    "Baseline complete. The database now has a Prisma migration ledger without changing application tables."
+  );
+} finally {
+  await prisma.$disconnect();
+}
