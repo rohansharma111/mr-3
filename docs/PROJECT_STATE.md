@@ -132,3 +132,26 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Git commits are development/version-control actions only; the intended production workflow is manual Vercel deployment.
 - Vercel documents `git.deploymentEnabled: false` as the configuration for disabling Git-triggered automatic deployments. A manual deployment from the Vercel dashboard or CLI remains available.
 - Because the Vercel project was just created, perform the first deployment manually so the project establishes the repository configuration. After that, future commits should not be used as deployment triggers.
+
+## Authentication milestone
+
+- Auth.js credentials authentication is now implemented on `development`.
+- Sessions use Auth.js JWTs with an 8-hour max age.
+- User identity is derived from the authenticated session in API routes; the hardcoded demo email is no longer used by application APIs.
+- Passwords are stored as bcrypt hashes in `app_users.password_hash`.
+- Added `app/login/page.tsx`, `auth.ts`, `proxy.ts`, session typing, and authenticated user UI/sign-out.
+- Added the development migration `prisma/migrations/20261008120000_add_user_password_hash/migration.sql`.
+- Password provisioning is intentionally environment-driven. Use `npm run auth:set-password` with `MR3_USER_EMAIL` and `MR3_USER_PASSWORD`; never commit plaintext passwords.
+- `AUTH_SECRET` is required for Auth.js. Generate it with `npx auth secret` and store it only in local/Vercel environment variables.
+- API authorization is still intentionally being hardened further with role-specific permissions and rate limiting in the next security milestone.
+
+## Local development
+
+- Clone the repository and check out `development`.
+- Install dependencies with `npm install`.
+- Copy `.env.example` to `.env.local`.
+- Set `DATABASE_URL` to the **Neon development branch**, not production.
+- Generate `AUTH_SECRET` locally with `npx auth secret`.
+- Run `npx prisma migrate deploy` against the development database.
+- Set a development password with `MR3_USER_EMAIL=... MR3_USER_PASSWORD=... npm run auth:set-password`.
+- Start with `npm run dev`.
