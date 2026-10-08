@@ -856,6 +856,7 @@ export default function Home() {
                     </button>
                   </div>
                 )}
+              </div>
               <div className="mr-header-divider" />
               <UserMenu />
             </div>
