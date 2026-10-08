@@ -33,18 +33,19 @@ export async function GET(request: NextRequest) {
   const { state, region, patch, specialty, q, sort } = parsed.data;
 
   try {
+  const selectedPatch = await prisma.patch.findFirst({
+    where: { name: patch, state, region },
+    select: { id: true }
+  });
+
+  if (!selectedPatch) {
+    return NextResponse.json([]);
+  }
+
   const doctors = await prisma.doctor.findMany({
     where: {
       isActive: true,
-      patches: {
-        some: {
-          patch: {
-            name: patch,
-            state,
-            region
-          }
-        }
-      },
+      patches: { some: { patchId: selectedPatch.id } },
       ...(specialty !== "All" ? { specialty: { name: specialty } } : {}),
       ...(q ? {
         OR: [
