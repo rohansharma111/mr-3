@@ -89,6 +89,16 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    await tx.notification.create({
+      data: {
+        userId: user.id,
+        type: "ACTIVITY",
+        title: "Call logged",
+        message: `Call logged for ${doctor.name}.`,
+        actionUrl: "/?section=calls"
+      }
+    });
+
     return created;
   });
 
