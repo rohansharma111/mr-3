@@ -3,12 +3,14 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 
+const callStatuses = ["PLANNED", "COMPLETED", "MISSED", "CANCELLED"] as const;
+
 const callSchema = z.object({
   doctorId: z.string().uuid(),
   productId: z.string().uuid().optional().nullable(),
   outcome: z.string().trim().min(1).max(500),
   notes: z.string().trim().max(5000).optional().default(""),
-  status: z.enum(["PLANNED", "COMPLETED", "MISSED", "CANCELLED"]).default("COMPLETED")
+  status: z.enum(callStatuses).default("COMPLETED")
 });
 
 
@@ -16,7 +18,13 @@ export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const doctorId = new URL(request.url).searchParams.get("doctorId");
+  const searchParams = new URL(request.url).searchParams;
+  const doctorId = searchParams.get("doctorId");
+  const status = searchParams.get("status");
+
+  if (status && !callStatuses.includes(status as typeof callStatuses[number])) {
+    return NextResponse.json({ error: "Invalid call status" }, { status: 400 });
+  }
 
   if (doctorId) {
     const parsedDoctorId = z.string().uuid().safeParse(doctorId);
@@ -26,7 +34,11 @@ export async function GET(request: NextRequest) {
   }
 
   const calls = await prisma.call.findMany({
-    where: doctorId ? { doctorId, userId: user.id } : { userId: user.id },
+    where: {
+      userId: user.id,
+      ...(doctorId ? { doctorId } : {}),
+      ...(status ? { status } : {})
+    },
     include: {
       doctor: { select: { name: true } },
       product: { select: { name: true } }
