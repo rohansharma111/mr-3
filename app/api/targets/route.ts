@@ -147,6 +147,16 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    await tx.notification.create({
+      data: {
+        userId: user.id,
+        type: "TARGET",
+        title: existing ? "Targets updated" : "Targets created",
+        message: `Targets saved for ${parsed.data.periodStart} to ${parsed.data.periodEnd}.`,
+        actionUrl: "/?section=targets"
+      }
+    });
+
     return saved;
   });
 
