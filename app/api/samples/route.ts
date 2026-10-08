@@ -20,6 +20,17 @@ export async function GET(request: NextRequest) {
   const doctorId = searchParams.get("doctorId");
   const status = searchParams.get("status");
 
+  if (doctorId) {
+    const parsedDoctorId = z.string().uuid().safeParse(doctorId);
+    if (!parsedDoctorId.success) {
+      return NextResponse.json({ error: "Invalid doctor id" }, { status: 400 });
+    }
+  }
+
+  if (status && !statuses.includes(status as typeof statuses[number])) {
+    return NextResponse.json({ error: "Invalid sample status" }, { status: 400 });
+  }
+
   const issues = await prisma.sampleIssue.findMany({
     where: {
       userId: user.id,
