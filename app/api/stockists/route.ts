@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
+
+const stockistQuerySchema = z.object({
+  productId: z.string().uuid().optional(),
+  molecule: z.string().trim().min(1).max(200).optional()
+});
 
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const params = new URL(request.url).searchParams;
-  const productId = params.get("productId");
-  const molecule = params.get("molecule");
+  const parsed = stockistQuerySchema.safeParse({
+    productId: params.get("productId") ?? undefined,
+    molecule: params.get("molecule") ?? undefined
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid stockist filters", details: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { productId, molecule } = parsed.data;
 
   const stockists = await prisma.stockist.findMany({
     where: { isActive: true },
