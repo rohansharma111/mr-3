@@ -82,3 +82,16 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .mr-user-info { display: none; }
   .mr-signout { padding: 9px 10px !important; min-height: 38px; font-size: 11px !important; }
 }
+
+
+.mr-mobile-doctor-cards { display: none; }
+@media (max-width: 767px) {
+  .mr-desktop-table { display: none; }
+  .mr-mobile-doctor-cards { display: block; }
+  .mr-main-content .mr-mobile-doctor-cards button { min-height: 0; }
+  .mr-main-content section > .flex.flex-col.sm\\:flex-row { align-items: stretch; }
+  .mr-main-content section > .flex.flex-col.sm\\:flex-row > div:last-child { width: 100%; }
+  .mr-main-content section > .flex.flex-col.sm\\:flex-row > div:last-child button { flex: 1 1 0; }
+  .mr-main-content .bg-gradient-to-r { padding: 18px !important; }
+  .mr-main-content .bg-gradient-to-r .text-xs.text-blue-200 { line-height: 1.5; }
+}
