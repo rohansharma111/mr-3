@@ -27,7 +27,13 @@ export async function GET(request: NextRequest) {
       ...(status && statuses.includes(status as typeof statuses[number]) ? { status } : {})
     },
     include: {
-      doctor: { select: { id: true, name: true, specialty: { select: { name: true } } } },
+      doctor: {
+        select: {
+          id: true,
+          name: true,
+          specialty: { select: { name: true } }
+        }
+      },
       product: { select: { id: true, name: true, molecule: true } }
     },
     orderBy: { issuedAt: "desc" },
@@ -52,15 +58,27 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const parsed = issueSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid sample issue", details: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid sample issue", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
 
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [doctor, product] = await Promise.all([
-    prisma.doctor.findFirst({ where: { id: parsed.data.doctorId, isActive: true }, select: { id: true, name: true } }),
-    prisma.product.findFirst({ where: { id: parsed.data.productId, isActive: true }, select: { id: true, name: true } })
+    prisma.doctor.findFirst({
+      where: { id: parsed.data.doctorId, isActive: true },
+      select: { id: true, name: true }
+    }),
+    prisma.product.findFirst({
+      where: { id: parsed.data.productId, isActive: true },
+      select: { id: true, name: true }
+    })
   ]);
+
   if (!doctor) return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
   if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
 
@@ -75,15 +93,22 @@ export async function POST(request: NextRequest) {
         isDemo: true
       }
     });
+
     await tx.auditLog.create({
       data: {
         userId: user.id,
         action: "CREATE",
         entityType: "SAMPLE_ISSUE",
         entityId: created.id,
-        metadata: { doctorId: doctor.id, productId: product.id, quantity: created.quantity, status: created.status }
+        metadata: {
+          doctorId: doctor.id,
+          productId: product.id,
+          quantity: created.quantity,
+          status: created.status
+        }
       }
     });
+
     await tx.notification.create({
       data: {
         userId: user.id,
@@ -93,34 +118,63 @@ export async function POST(request: NextRequest) {
         actionUrl: "/?section=samples"
       }
     });
+
     return created;
   });
 
-  return NextResponse.json({
-    id: sample.id, doctorId: doctor.id, doctorName: doctor.name,
-    productId: product.id, productName: product.name, quantity: sample.quantity,
-    status: sample.status, issuedAt: sample.issuedAt.toISOString()
-  }, { status: 201 });
+  return NextResponse.json(
+    {
+      id: sample.id,
+      doctorId: doctor.id,
+      doctorName: doctor.name,
+      productId: sample.productId,
+      productName: product.name,
+      quantity: sample.quantity,
+      status: sample.status,
+      issuedAt: sample.issuedAt.toISOString()
+    },
+    { status: 201 }
+  );
 }
 
 export async function PATCH(request: NextRequest) {
-  const parsed = z.object({
-    id: z.string().uuid(),
-    status: z.enum(statuses)
-  }).safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid sample update" }, { status: 400 });
+  const parsed = z
+    .object({
+      id: z.string().uuid(),
+      status: z.enum(statuses)
+    })
+    .safeParse(await request.json().catch(() => null));
 
-  const user = await prisma.user.findUnique({ where: { email: demoUserEmail } });
-  if (!user) return NextResponse.json({ error: "Active user not configured" }, { status: 500 });
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid sample update" }, { status: 400 });
+  }
 
-  const existing = await prisma.sampleIssue.findFirst({ where: { id: parsed.data.id, userId: user.id } });
-  if (!existing) return NextResponse.json({ error: "Sample issue not found" }, { status: 404 });
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const existing = await prisma.sampleIssue.findFirst({
+    where: { id: parsed.data.id, userId: user.id }
+  });
+  if (!existing) {
+    return NextResponse.json({ error: "Sample issue not found" }, { status: 404 });
+  }
 
   const updated = await prisma.$transaction(async (tx) => {
-    const result = await tx.sampleIssue.update({ where: { id: existing.id }, data: { status: parsed.data.status } });
-    await tx.auditLog.create({
-      data: { userId: user.id, action: "UPDATE", entityType: "SAMPLE_ISSUE", entityId: result.id, metadata: { status: result.status } }
+    const result = await tx.sampleIssue.update({
+      where: { id: existing.id },
+      data: { status: parsed.data.status }
     });
+
+    await tx.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "UPDATE",
+        entityType: "SAMPLE_ISSUE",
+        entityId: result.id,
+        metadata: { status: result.status }
+      }
+    });
+
     await tx.notification.create({
       data: {
         userId: user.id,
@@ -130,8 +184,12 @@ export async function PATCH(request: NextRequest) {
         actionUrl: "/?section=samples"
       }
     });
+
     return result;
   });
 
-  return NextResponse.json({ id: updated.id, status: updated.status });
+  return NextResponse.json({
+    id: updated.id,
+    status: updated.status
+  });
 }
