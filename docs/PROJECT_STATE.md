@@ -218,6 +218,17 @@ Important source-derived demo values:
 - The production branch could not be protected because the current Neon plan has reached its protected-branch limit; no production protection setting was changed.
 - The temporary candidate branch remains available for verification/recovery and has not been deleted.
 
+## Doctor Potential persisted-profile UI milestone
+
+- Wired the Doctor Potential deep-profile screen to authenticated `GET /api/doctors/[id]/profile`.
+- Added a persisted profile loading/error state and four functional tabs: Overview, Prescribing, History and Insights.
+- Overview now shows only persisted potential/activity metrics and recent calls.
+- History now shows persisted calls, sample issues and plans for the authenticated user.
+- Prescribing explicitly labels the prototype writing-pattern snapshot as source data and keeps `doctorSpecific: false`; it is not presented as individual-doctor prescribing history.
+- Insights shows persisted activity totals/last activity and explicitly keeps conversion, doctor availability and doctor-to-chemist relationships unavailable because they are not modeled.
+- The existing prototype visual language and actions (Add to Plan, Issue Samples, Log Call) were preserved.
+- No new business facts or unsupported KPIs were introduced.
+
 ## Validation status
 - Neon development schema/data checks have been performed through the connected Neon integration.
 - GitHub source/tree checks have been performed.
@@ -230,7 +241,7 @@ Important source-derived demo values:
 2. Run `npm run db:baseline-dev` locally with `DATABASE_URL` pointing only to Neon development, `MR3_DATABASE_ENV=development`, and `MR3_MIGRATION_BASELINE_CONFIRM=I_UNDERSTAND_BASELINE_EXISTING_DEV_DATABASE`. Stop if the Prisma schema diff is non-empty.
 3. Run `npx prisma migrate status` after baselining and confirm the repository migration history is recognized.
 4. Run `npm run build` locally and resolve any compile/type/runtime build issues before promotion.
-5. Wire the new persisted doctor profile API into the Doctor Potential tabs, using only returned activity data and clearly labeling prototype-source analytics as non-doctor-specific.
+5. Validate the new Doctor Potential persisted-profile UI locally with `npm run typecheck` and `npm run build`.
 6. Continue role-specific permission enforcement only where product requirements define clear management/admin boundaries.
 7. Validate AI Support end-to-end once server AI credentials are configured.
 8. Add robust validation, error handling, audit logging, indexes, tests and observability.
