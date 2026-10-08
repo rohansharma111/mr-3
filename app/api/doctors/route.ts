@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth-user";
 
 export async function GET(request: NextRequest) {
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const patch = searchParams.get("patch") || "Veera Desai";
   const specialty = searchParams.get("specialty") || "All";
