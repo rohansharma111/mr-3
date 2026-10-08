@@ -17,7 +17,8 @@ The supplied file ai_studio_code (1).html is the visual/product reference. It is
 - Repo: rohansharma111/mr-3
 - Default branch: main
 - develop branch exists.
-- Foundation, database schema, doctor API, seed and first database-backed UI are committed on main.
+- Foundation, database schema, doctor API, seed, database-backed UI and persistent call workflow are committed on main.
+- A fresh `development` GitHub branch has been created from the current main state; use it for subsequent implementation work.
 - The current UI is a first production-oriented React conversion and is being expanded incrementally.
 
 ### Neon
@@ -57,6 +58,7 @@ Important source-derived demo values:
 ## Current code
 - src/app/page.tsx is the main client UI. It now calls the database-backed doctor API instead of keeping the doctor list as the Explorer data source.
 - src/app/api/doctors/route.ts provides filtered/sorted doctor queries by patch, specialty and search query.
+- src/app/api/calls/route.ts provides validated GET/POST call logging; POST persists the call and creates an audit event in one transaction.
 - prisma/schema.prisma defines the main domain models.
 - prisma/seed.ts provides a repeatable seed foundation for patches, specialties, user and doctors.
 - docs/PROJECT_STATE.md is the continuation handoff.
@@ -65,6 +67,7 @@ Important source-derived demo values:
 - Sidebar/navigation follows the prototype structure.
 - Doctor Explorer now has hierarchy filters, patch sidebar, database-backed table, sort, map visualization and writing-pattern panel.
 - Doctor Potential has the prototype-style deep-profile shell.
+- Log Call is now a real modal workflow from Doctor Potential: validated outcome/notes are persisted to Neon and audited.
 - AI Support has the prototype-style chat/recommendation shell; it is still a UI placeholder and must not be represented as a real AI service yet.
 - Stockist Data has the prototype-style summary and stock table.
 - My Plan, My Calls, Samples, Targets, Reports and Notifications currently show module placeholders and are next to be made functional.
@@ -72,15 +75,16 @@ Important source-derived demo values:
 
 ## Immediate next steps
 1. Verify the Prisma schema against the existing Neon SQL schema and verify the seed path.
-2. Add API/database-driven patch and specialty metadata instead of hardcoded filter arrays.
-3. Complete the Explorer data model: coordinates, writing-pattern analytics and source-backed map positions.
-4. Implement doctor profile tabs and the Log Call modal as persisted transactions with audit events.
-5. Implement My Plan, My Calls, Samples, Targets, Reports and Notifications.
-6. Add authentication and RBAC before production workflows are exposed.
-7. Add server-side AI Support with validated input, authorization, rate limiting and secret isolation.
-8. Add robust validation, error handling, audit logging, indexes, tests and observability.
-9. Configure development/staging/production environment variables and deployment.
-10. Only after these are stable, introduce real company/user data import workflows.
+2. Move subsequent implementation work onto the GitHub `development` branch.
+3. Add API/database-driven patch and specialty metadata instead of hardcoded filter arrays.
+4. Complete the Explorer data model: coordinates, writing-pattern analytics and source-backed map positions.
+5. Implement doctor profile tabs beyond the current shell, including persisted call history.
+6. Implement My Plan, My Calls, Samples, Targets, Reports and Notifications.
+7. Add authentication and RBAC before production workflows are exposed.
+8. Add server-side AI Support with validated input, authorization, rate limiting and secret isolation.
+9. Add robust validation, error handling, audit logging, indexes, tests and observability.
+10. Configure development/staging/production environment variables and deployment.
+11. Only after these are stable, introduce real company/user data import workflows.
 
 ## Source rule
 When implementing prototype behavior, use the supplied HTML as the source of truth for labels, demo values and terminology. Do not silently invent replacement business data.
