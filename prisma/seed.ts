@@ -4,8 +4,13 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 const patchData = [
-  ["Veera Desai", 19], ["Vile Parle", 25], ["Versova", 21],
-  ["Andheri Station", 18], ["Oshiwara", 15], ["Lokhandwala", 16], ["Jogeshwari (W)", 14]
+  ["Veera Desai", "Maharashtra", "Andheri Region", 19],
+  ["Vile Parle", "Maharashtra", "Andheri Region", 25],
+  ["Versova", "Maharashtra", "Andheri Region", 21],
+  ["Andheri Station", "Maharashtra", "Andheri Region", 18],
+  ["Oshiwara", "Maharashtra", "Andheri Region", 15],
+  ["Lokhandwala", "Maharashtra", "Andheri Region", 16],
+  ["Jogeshwari (W)", "Maharashtra", "Andheri Region", 14]
 ] as const;
 
 const doctorMapCoords: Record<string, readonly [number, number]> = {
@@ -35,8 +40,12 @@ const doctorData = [
 ] as const;
 
 async function main() {
-  for (const [name, doctorCount] of patchData) {
-    await prisma.patch.upsert({ where: { name }, update: { doctorCount }, create: { name, doctorCount, isDemo: true } });
+  for (const [name, state, region, doctorCount] of patchData) {
+    await prisma.patch.upsert({
+      where: { name },
+      update: { state, region, doctorCount },
+      create: { name, state, region, doctorCount, isDemo: true }
+    });
   }
 
   for (const name of ["Cardiologist","Diabetologist","Gynecologist","Orthopedic","General Physician"]) {
