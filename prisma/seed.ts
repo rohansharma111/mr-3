@@ -33,7 +33,7 @@ async function main() {
   await prisma.user.upsert({
     where: { email: "amit.rawat@mr3.demo" },
     update: { name: "Amit Rawat", role: "FIELD_MANAGER" },
-    create: { name: "Amit Rawat", email: "amit.rawat@mr3.demo", role: Role.FIELD_MANAGER }
+    create: { name: "Amit Rawat", email: "amit.rawat@mr3.demo", role: "FIELD_MANAGER" }
   });
 
   for (const [name, spec, clinic, location, score, potential, distanceKm, patchName] of doctorData) {
