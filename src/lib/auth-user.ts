@@ -23,9 +23,7 @@ export async function getAuthenticatedUser() {
 export async function requireAuthenticatedUser() {
   const user = await getAuthenticatedUser();
 
-  if (!user) {
-    throw new Error("UNAUTHORIZED");
-  }
+  if (!user) throw new Error("UNAUTHORIZED");
 
   return user;
 }
@@ -40,4 +38,13 @@ export function hasRole(role: string, requiredRole: AppRole) {
 
 export function isManagementRole(role: string) {
   return hasAnyRole(role, [ROLES.AREA_MANAGER, ROLES.ADMIN]);
+}
+
+export function requireRole(
+  role: string,
+  allowedRoles: readonly AppRole[]
+) {
+  if (!hasAnyRole(role, allowedRoles)) {
+    throw new Error("FORBIDDEN");
+  }
 }
