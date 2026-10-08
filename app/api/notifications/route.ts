@@ -3,11 +3,23 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-user";
 
+const notificationQuerySchema = z.object({
+  unread: z.enum(["true", "false"]).optional()
+});
+
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const unreadOnly = new URL(request.url).searchParams.get("unread") === "true";
+  const parsedQuery = notificationQuerySchema.safeParse({
+    unread: new URL(request.url).searchParams.get("unread") ?? undefined
+  });
+
+  if (!parsedQuery.success) {
+    return NextResponse.json({ error: "Invalid notification filter", details: parsedQuery.error.flatten() }, { status: 400 });
+  }
+
+  const unreadOnly = parsedQuery.data.unread === "true";
 
   const [notifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({
@@ -46,6 +58,10 @@ export async function PATCH(request: NextRequest) {
     .refine(
       (value) => Boolean(value.id) || value.markAllRead === true,
       { message: "Provide an id or markAllRead" }
+    )
+    .refine(
+      (value) => !(value.id && value.markAllRead === true),
+      { message: "Provide either id or markAllRead, not both" }
     )
     .safeParse(await request.json().catch(() => null));
 
