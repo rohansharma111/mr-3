@@ -20,6 +20,7 @@ model User {
   targets    Target[]
   plans      Plan[]
   auditLogs  AuditLog[]
+  notifications Notification[]
   @@map("app_users")
 }
 
@@ -192,4 +193,20 @@ model AuditLog {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   @@index([entityType, entityId, createdAt])
   @@map("audit_logs")
+}
+
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   @default("INFO")
+  title     String
+  message   String
+  actionUrl String?  @map("action_url")
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@index([userId, isRead, createdAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
