@@ -59,6 +59,7 @@ Important source-derived demo values:
 - src/app/page.tsx is the main client UI. It now calls the database-backed doctor API instead of keeping the doctor list as the Explorer data source.
 - src/app/api/doctors/route.ts provides filtered/sorted doctor queries by patch, specialty and search query.
 - src/app/api/calls/route.ts provides validated GET/POST call logging; POST persists the call and creates an audit event in one transaction.
+- The same calls API now supports filtered history queries by doctor/status and bounded result limits.
 - prisma/schema.prisma defines the main domain models.
 - prisma/seed.ts provides a repeatable seed foundation for patches, specialties, user and doctors.
 - docs/PROJECT_STATE.md is the continuation handoff.
@@ -68,6 +69,8 @@ Important source-derived demo values:
 - Doctor Explorer now has hierarchy filters, patch sidebar, database-backed table, sort, map visualization and writing-pattern panel.
 - Doctor Potential has the prototype-style deep-profile shell.
 - Log Call is now a real modal workflow from Doctor Potential: validated outcome/notes are persisted to Neon and audited.
+- My Calls is now a database-backed module with status filtering, refresh, summary cards and call-history table.
+- Doctor Potential now surfaces recent calls for the selected doctor using the same call-history source.
 - AI Support has the prototype-style chat/recommendation shell; it is still a UI placeholder and must not be represented as a real AI service yet.
 - Stockist Data has the prototype-style summary and stock table.
 - My Plan, My Calls, Samples, Targets, Reports and Notifications currently show module placeholders and are next to be made functional.
@@ -78,8 +81,8 @@ Important source-derived demo values:
 2. Move subsequent implementation work onto the GitHub `development` branch.
 3. Add API/database-driven patch and specialty metadata instead of hardcoded filter arrays.
 4. Complete the Explorer data model: coordinates, writing-pattern analytics and source-backed map positions.
-5. Implement doctor profile tabs beyond the current shell, including persisted call history.
-6. Implement My Plan, My Calls, Samples, Targets, Reports and Notifications.
+5. Expand doctor profile tabs beyond the current Overview shell; call history is now persisted and visible.
+6. Implement My Plan, Samples, Targets, Reports and Notifications; My Calls is now functional.
 7. Add authentication and RBAC before production workflows are exposed.
 8. Add server-side AI Support with validated input, authorization, rate limiting and secret isolation.
 9. Add robust validation, error handling, audit logging, indexes, tests and observability.
