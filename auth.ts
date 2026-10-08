@@ -25,10 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         const parsed = credentialsSchema.safeParse(credentials);
-        if (!parsed.success) {
-          console.error("[AUTH DEBUG] invalid credential format");
-          return null;
-        }
+        if (!parsed.success) return null;
 
         const email = parsed.data.email.toLowerCase();
 
@@ -36,18 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email }
         });
 
-        if (!user) {
-          console.error("[AUTH DEBUG] user not found", { email });
-          return null;
-        }
-
-        if (!user.isActive) {
-          console.error("[AUTH DEBUG] user inactive", { email });
-          return null;
-        }
-
-        if (!user.passwordHash) {
-          console.error("[AUTH DEBUG] password hash missing", { email });
+        if (!user || !user.isActive || !user.passwordHash) {
           return null;
         }
 
@@ -56,12 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           user.passwordHash
         );
 
-        if (!passwordValid) {
-          console.error("[AUTH DEBUG] password mismatch", { email });
-          return null;
-        }
-
-        console.info("[AUTH DEBUG] password verified", { email });
+        if (!passwordValid) return null;
 
         return {
           id: user.id,
@@ -116,7 +97,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub;
-        session.user.role = typeof token.role === "string" ? token.role : "FIELD_MANAGER";
+        session.user.role = typeof token.role === "string" ? token.role : "";
       }
       return session;
     }
