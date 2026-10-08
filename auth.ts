@@ -49,6 +49,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     })
   ],
+  events: {
+    async signIn({ user }) {
+      if (!user.id) return;
+      try {
+        await prisma.auditLog.create({
+          data: {
+            userId: user.id,
+            action: "SIGN_IN",
+            entityType: "AUTH",
+            metadata: { provider: "credentials" }
+          }
+        });
+      } catch {
+        // Authentication should not fail because an audit write failed.
+      }
+    },
+    async signOut(message) {
+      const userId = "token" in message ? message.token?.sub : undefined;
+      if (!userId) return;
+      try {
+        await prisma.auditLog.create({
+          data: {
+            userId,
+            action: "SIGN_OUT",
+            entityType: "AUTH",
+            metadata: { provider: "credentials" }
+          }
+        });
+      } catch {
+        // Authentication should not fail because an audit write failed.
+      }
+    }
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
