@@ -15,6 +15,8 @@ export async function GET() {
         select: {
           id: true,
           name: true,
+          state: true,
+          region: true,
           doctorCount: true
         },
         orderBy: { name: "asc" }
@@ -25,10 +27,33 @@ export async function GET() {
       })
     ]);
 
+    const locations = Array.from(
+      patches.reduce((states, patch) => {
+        const state = states.get(patch.state) ?? new Map<string, typeof patches>();
+        const regionPatches = state.get(patch.region) ?? [];
+        state.set(patch.region, [...regionPatches, patch]);
+        states.set(patch.state, state);
+        return states;
+      }, new Map<string, Map<string, typeof patches>>())
+    ).map(([state, regions]) => ({
+      state,
+      regions: Array.from(regions).map(([region, regionPatches]) => ({
+        name: region,
+        patches: regionPatches.map((patch) => ({
+          id: patch.id,
+          name: patch.name,
+          doctorCount: patch.doctorCount
+        }))
+      }))
+    }));
+
     return NextResponse.json({
+      locations,
       patches: patches.map((patch) => ({
         id: patch.id,
         name: patch.name,
+        state: patch.state,
+        region: patch.region,
         doctorCount: patch.doctorCount
       })),
       specialties: specialties.map((specialty) => ({
