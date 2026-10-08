@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth-user";
 
-const demoUserEmail = "amit.rawat@mr3.demo";
 
 const targetSchema = z.object({
   periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -22,6 +22,9 @@ function endExclusive(date: Date) {
 }
 
 export async function GET(request: NextRequest) {
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const params = new URL(request.url).searchParams;
   const now = new Date();
   const defaultStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -34,10 +37,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid target period" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email: demoUserEmail } });
-  if (!user || !user.isActive) {
-    return NextResponse.json({ error: "Active user not configured" }, { status: 500 });
-  }
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const target = await prisma.target.findFirst({
     where: { userId: user.id, periodStart: start, periodEnd: end }
