@@ -146,6 +146,18 @@ model SampleIssue {
   @@map("sample_issues")
 }
 
+model WritingPatternSnapshot {
+  id          String   @id @default(uuid()) @db.Uuid
+  period      String   @unique
+  categories  Json     @db.JsonB
+  molecules   Json     @db.JsonB
+  insight     String
+  sourceLabel String   @default("PROTOTYPE_SOURCE") @map("source_label")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  @@map("writing_pattern_snapshots")
+}
+
 model Stockist {
   id        String             @id @default(uuid()) @db.Uuid
   name      String             @unique
