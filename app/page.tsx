@@ -147,8 +147,11 @@ const formatLocalDate = (date: Date) => {
 export default function Home() {
   const [section, setSection] = useState("explorer");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [state, setState] = useState("Maharashtra");
+  const [region, setRegion] = useState("Andheri Region");
   const [patch, setPatch] = useState("Veera Desai");
   const [specialty, setSpecialty] = useState("All");
+  const [locations, setLocations] = useState<{ state: string; regions: { name: string; patches: { id: string; name: string; doctorCount: number }[] }[] }[]>([]);
   const [patches, setPatches] = useState<{ id: string; name: string; doctorCount: number }[]>([]);
   const [specialties, setSpecialties] = useState<string[]>(["All"]);
   const [sort, setSort] = useState("score");
@@ -257,22 +260,35 @@ export default function Home() {
       .then((data) => {
         if (cancelled) return;
 
+        const nextLocations = Array.isArray(data.locations) ? data.locations : [];
         const nextPatches = Array.isArray(data.patches) ? data.patches : [];
         const nextSpecialties = Array.isArray(data.specialties) ? data.specialties : [];
 
+        setLocations(nextLocations);
         setPatches(nextPatches);
         setSpecialties(["All", ...nextSpecialties.map((item: { name: string }) => item.name)]);
 
-        if (nextPatches.length > 0) {
-          setPatch((current) =>
-            nextPatches.some((item: { name: string }) => item.name === current)
+        if (nextLocations.length > 0) {
+          const firstState = nextLocations[0];
+          const firstRegion = firstState.regions[0];
+          const firstPatch = firstRegion?.patches[0];
+
+          setState((current) => nextLocations.some((item: { state: string }) => item.state === current) ? current : firstState.state);
+          setRegion((current) =>
+            firstState.regions.some((item: { name: string }) => item.name === current)
               ? current
-              : nextPatches[0].name
+              : (firstRegion?.name ?? "")
+          );
+          setPatch((current) =>
+            firstRegion?.patches.some((item: { name: string }) => item.name === current)
+              ? current
+              : (firstPatch?.name ?? "")
           );
         }
       })
       .catch(() => {
         if (!cancelled) {
+          setLocations([]);
           setPatches([]);
           setSpecialties(["All"]);
         }
@@ -584,11 +600,15 @@ export default function Home() {
     setPlans((current) => current.map((plan) => plan.id === id ? { ...plan, status } : plan));
   };
 
+  const selectedState = locations.find((item) => item.state === state);
+  const selectedRegion = selectedState?.regions.find((item) => item.name === region);
+  const visiblePatches = selectedRegion?.patches ?? [];
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError("");
-    fetch("/api/doctors?" + new URLSearchParams({ patch, specialty, q: query, sort }), { cache: "no-store" })
+    fetch("/api/doctors?" + new URLSearchParams({ state, region, patch, specialty, q: query, sort }), { cache: "no-store" })
       .then(async (r) => {
         if (!r.ok) throw new Error("Unable to load doctors");
         return r.json() as Promise<Doctor[]>;
@@ -601,7 +621,7 @@ export default function Home() {
       .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : "Unable to load doctors"); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [patch, specialty, sort, query]);
+  }, [state, region, patch, specialty, sort, query]);
 
   useEffect(() => {
     if (section !== "calls") return;
@@ -738,12 +758,33 @@ export default function Home() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div><h2 className="text-2xl font-black text-slate-900">Doctor Explorer</h2><p className="text-sm text-slate-500">Find doctors by location, patch & specialty</p></div>
                 <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-                  <select className="text-xs font-semibold bg-slate-100 px-3 py-2 rounded-lg border-none" defaultValue="Maharashtra (Mumbai)"><option>Maharashtra (Mumbai)</option><option>Delhi</option><option>Karnataka</option><option>Gujarat</option><option>Tamil Nadu</option></select>
+                  <select value={state} onChange={(e) => {
+                    const nextState = e.target.value;
+                    const nextStateData = locations.find((item) => item.state === nextState);
+                    const nextRegion = nextStateData?.regions[0];
+                    const nextPatch = nextRegion?.patches[0];
+                    setState(nextState);
+                    setRegion(nextRegion?.name ?? "");
+                    setPatch(nextPatch?.name ?? "");
+                  }} className="text-xs font-semibold bg-slate-100 px-3 py-2 rounded-lg border-none">
+                    {locations.map((item) => <option key={item.state} value={item.state}>{item.state}</option>)}
+                  </select>
                   <span className="text-slate-300">/</span>
-                  <select className="text-xs font-semibold bg-slate-100 px-3 py-2 rounded-lg border-none" defaultValue="Andheri Region"><option>Andheri Region</option><option>Bandra Region</option><option>Khar Region</option><option>Matunga Region</option></select>
+                  <select value={region} onChange={(e) => {
+                    const nextRegion = e.target.value;
+                    const nextRegionData = selectedState?.regions.find((item) => item.name === nextRegion);
+                    setRegion(nextRegion);
+                    setPatch(nextRegionData?.patches[0]?.name ?? "");
+                  }} disabled={!selectedState || selectedState.regions.length === 0} className="text-xs font-semibold bg-slate-100 px-3 py-2 rounded-lg border-none disabled:opacity-50">
+                    {selectedState?.regions.length
+                      ? selectedState.regions.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)
+                      : <option value="">No regions available</option>}
+                  </select>
                   <span className="text-slate-300">/</span>
-                  <select value={patch} onChange={(e) => setPatch(e.target.value)} className="text-xs font-semibold bg-blue-50 text-blue-800 px-3 py-2 rounded-lg border-none">
-                    {patches.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}
+                  <select value={patch} onChange={(e) => setPatch(e.target.value)} disabled={visiblePatches.length === 0} className="text-xs font-semibold bg-blue-50 text-blue-800 px-3 py-2 rounded-lg border-none disabled:opacity-50">
+                    {visiblePatches.length
+                      ? visiblePatches.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)
+                      : <option value="">No patches available</option>}
                   </select>
                   <span className="text-slate-300">/</span>
                   <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="text-xs font-semibold bg-slate-100 px-3 py-2 rounded-lg border-none">
@@ -756,7 +797,7 @@ export default function Home() {
                 <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Patches in Region</h3>
                   <div className="space-y-1.5">
-                    {patches.map((item) => <button key={item.id} onClick={() => setPatch(item.name)}
+                    {visiblePatches.map((item) => <button key={item.id} onClick={() => setPatch(item.name)}
                       className={"w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold " + (patch === item.name ? "bg-blue-600 text-white shadow-sm" : "hover:bg-slate-100 text-slate-700")}>
                       <span>{item.name}</span><span className={(patch === item.name ? "bg-blue-700 text-white" : "bg-slate-100 text-slate-600") + " px-2 py-0.5 rounded-full text-[11px]"}>{item.doctorCount}</span>
                     </button>)}
