@@ -224,7 +224,7 @@ export default function Home() {
   const sectionMeta: Record<string, { title: string; description: string }> = {
     explorer: { title: "Doctor Explorer", description: "Discover and prioritize doctors using persisted field intelligence." },
     potential: { title: "Doctor Potential", description: "Review doctor activity, history, and available insights." },
-    ai: { title: "AI Support", description: "Field assistance is being prepared for a future release." },
+    ai: { title: "AI Support", description: "Ask about doctors, products, stockists, activity, and field planning." },
     stockist: { title: "Stockist Data", description: "Monitor inventory availability from persisted stockist data." },
     plan: { title: "My Plan", description: "Plan and manage your upcoming field visits." },
     calls: { title: "My Calls", description: "Review your persisted call activity and outcomes." },
@@ -684,18 +684,25 @@ export default function Home() {
           <nav className="p-3 space-y-1 text-sm font-medium">
             {nav.map(([id, icon, label]) => (
               <button key={id} onClick={() => navigate(id)}
-                className={"w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left " + (section === id ? "bg-blue-800 text-white border-l-4 border-blue-400" : "hover:bg-slate-800")}>
+                className={"w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left " + (section === id ? "bg-blue-800 text-white border-l-4 border-blue-400" : "hover:bg-slate-800")}>
                 <span className="w-5 text-center">{icon}</span>{label}
               </button>
             ))}
             <div className="pt-4 pb-2 px-3 text-[11px] uppercase tracking-wider text-slate-500 font-bold">Execution</div>
             {execution.map(([id, icon, label]) => (
-              <button key={id} onClick={() => setSection(id)}
-                className={"w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-slate-800 " + (section === id ? "text-white" : "")}>
+              <button key={id} onClick={() => navigate(id)}
+                className={"w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-slate-800 " + (section === id ? "text-white" : "")}>
                 <span className="w-5 text-center">{icon}</span>{label}
               </button>
             ))}
           </nav>
+          <div className="mt-3 mx-3 mb-4 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-[11px]">
+            <div className="flex items-center justify-between text-slate-400">
+              <span>Data connection</span>
+              <span className="text-emerald-400 font-bold">Live</span>
+            </div>
+            <div className="mt-1 text-slate-500">Persisted MR 3.0 workspace</div>
+          </div>
         </div>
       </aside>
 
@@ -712,7 +719,7 @@ export default function Home() {
             <div className="relative flex-1">
               <span className="absolute left-3.5 top-2.5 text-slate-400">⌕</span>
               <input value={query} onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search doctor by name, specialty, brand, molecule..."
+                placeholder="Search doctor, specialty, brand or molecule..."
                 className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-full text-sm outline-none focus:bg-white focus:border-blue-500 transition-all" />
             </div>
           </div>
