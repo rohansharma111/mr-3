@@ -83,7 +83,7 @@ Important source-derived demo values:
 - Some prototype KPI and profile values remain hardcoded because their underlying domain/analytics models have not yet been fully implemented.
 
 ## Immediate next steps
-1. Verify the Prisma schema and run a full local/Vercel build validation against the current development branch.
+1. Run a full local/Vercel build validation against the current development branch; the connected environment cannot currently execute a networked npm install/build.
 2. Verify the seed path after the Prisma field-to-column mapping alignment.
 3. Move subsequent implementation work onto the GitHub `development` branch.
 3. Add API/database-driven patch and specialty metadata instead of hardcoded filter arrays.
@@ -91,7 +91,7 @@ Important source-derived demo values:
 5. Expand doctor profile tabs beyond the current Overview shell; call history is now persisted and visible.
 6. Implement Reports and Notifications; My Calls, My Plan, Samples and Targets are now functional.
 7. Replace the temporary demo-user identity with authentication/session-derived identity and RBAC before production workflows are exposed.
-8. Add server-side AI Support with validated input, authorization, rate limiting and secret isolation.
+8. Add rate limiting and abuse controls for AI Support before exposing it to broad production traffic.
 9. Add robust validation, error handling, audit logging, indexes, tests and observability.
 10. Configure development/staging/production environment variables and deployment; keep Vercel automatic Git deployments disabled.
 
@@ -155,6 +155,26 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Run `npx prisma migrate deploy` against the development database.
 - Set a development password with `MR3_USER_EMAIL=... MR3_USER_PASSWORD=... npm run auth:set-password`.
 - Start with `npm run dev`.
+
+## Security hardening milestone
+
+- Removed the remaining legacy demo-user lookups from Plans, Samples, Targets and Notifications; mutations now use the authenticated session user.
+- Added role validation to the authenticated-user helper. Unknown/unsupported database roles are denied rather than silently treated as a valid role.
+- Added requireAuthenticatedUser(allowedRoles?) and requireRole(...) helpers for explicit role enforcement as role-specific business permissions are introduced.
+- Added GET /api/me as a session-derived identity endpoint.
+- Added production-oriented security response headers in next.config.ts: content-type sniffing protection, strict referrer policy, frame denial, permissions policy, HSTS and cross-origin opener policy.
+- Existing business APIs remain user-scoped. No new role restriction was invented where the supplied prototype does not define a clear permission boundary.
+
+## AI Support milestone
+
+- Added src/lib/ai.ts to build a compact, authenticated MR 3.0 context from doctors, products, stockist inventory, the current user's calls, upcoming plans and recent samples.
+- Added POST /api/ai/support using the OpenAI Responses API with the API key kept server-side.
+- AI input is validated and capped; provider requests have a timeout and provider errors are returned without exposing provider internals.
+- AI instructions explicitly prohibit invented MR 3.0 facts, hidden-prompt disclosure, diagnosis/prescribing and unsupported clinical claims.
+- AI queries are audited without storing the user's question text.
+- The AI Support UI now sends real requests, supports the prototype prompt chips, shows loading/errors and labels responses as grounded in MR 3.0 operational data.
+- OPENAI_API_KEY, OPENAI_MODEL and optional OPENAI_BASE_URL are documented in .env.example.
+- The AI feature intentionally returns a clear configuration error when no server-side API key is configured; it does not simulate a live model.
 
 ## Stockist milestone
 
