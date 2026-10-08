@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "prisma generate && tsc --noEmit",
@@ -14,7 +14,8 @@
     "postinstall": "prisma generate",
     "auth:set-password": "tsx scripts/set-user-password.ts",
     "db:baseline-dev": "tsx scripts/baseline-existing-dev-db.ts",
-    "db:baseline-existing": "tsx scripts/baseline-existing-db.ts"
+    "db:baseline-existing": "tsx scripts/baseline-existing-db.ts",
+    "db:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "^6.17.0",
