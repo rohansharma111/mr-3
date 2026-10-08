@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth-user";
 
-const demoUserEmail = "amit.rawat@mr3.demo";
 const priorities = ["LOW", "NORMAL", "HIGH", "URGENT"] as const;
 const statuses = ["PLANNED", "COMPLETED", "MISSED", "CANCELLED"] as const;
 
@@ -15,6 +15,9 @@ const planSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const doctorId = searchParams.get("doctorId");
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   const plans = await prisma.plan.findMany({
     where: {
-      user: { email: demoUserEmail },
+      userId: user.id,
       ...(doctorId ? { doctorId } : {}),
       ...(status && statuses.includes(status as typeof statuses[number]) ? { status } : {}),
       ...(from || to ? {
@@ -63,8 +66,8 @@ export async function POST(request: NextRequest) {
   const parsed = planSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid plan", details: parsed.error.flatten() }, { status: 400 });
 
-  const user = await prisma.user.findUnique({ where: { email: demoUserEmail } });
-  if (!user || !user.isActive) return NextResponse.json({ error: "Active user not configured" }, { status: 500 });
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const plannedFor = new Date(parsed.data.plannedFor);
   if (Number.isNaN(plannedFor.getTime())) return NextResponse.json({ error: "Invalid planned date" }, { status: 400 });
