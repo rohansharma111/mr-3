@@ -42,6 +42,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid report period" }, { status: 400 });
   }
 
+  const maxRangeEnd = new Date(start.getTime() + 366 * 24 * 60 * 60 * 1000);
+  if (end > maxRangeEnd) {
+    return NextResponse.json(
+      { error: "Report period cannot exceed one year" },
+      { status: 400 }
+    );
+  }
+
   const rangeEnd = endExclusive(end);
 
   const [
