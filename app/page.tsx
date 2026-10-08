@@ -152,6 +152,7 @@ export default function Home() {
   const [patch, setPatch] = useState("Veera Desai");
   const [specialty, setSpecialty] = useState("All");
   const [locations, setLocations] = useState<{ state: string; regions: { name: string; patches: { id: string; name: string; doctorCount: number }[] }[] }[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(true);
   const [patches, setPatches] = useState<{ id: string; name: string; doctorCount: number }[]>([]);
   const [specialties, setSpecialties] = useState<string[]>(["All"]);
   const [sort, setSort] = useState("score");
@@ -251,6 +252,7 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
+    setLocationsLoading(true);
 
     fetch("/api/metadata", { cache: "no-store" })
       .then(async (response) => {
@@ -292,6 +294,9 @@ export default function Home() {
           setPatches([]);
           setSpecialties(["All"]);
         }
+      })
+      .finally(() => {
+        if (!cancelled) setLocationsLoading(false);
       });
 
     return () => {
@@ -605,6 +610,13 @@ export default function Home() {
   const visiblePatches = selectedRegion?.patches ?? [];
 
   useEffect(() => {
+    if (locationsLoading || !state || !region || !patch) {
+      setDoctors([]);
+      setSelected(null);
+      setLoading(locationsLoading);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError("");
@@ -621,7 +633,7 @@ export default function Home() {
       .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : "Unable to load doctors"); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [state, region, patch, specialty, sort, query]);
+  }, [locationsLoading, state, region, patch, specialty, sort, query]);
 
   useEffect(() => {
     if (section !== "calls") return;
