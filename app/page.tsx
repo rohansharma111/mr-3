@@ -771,7 +771,7 @@ export default function Home() {
                         <select value={sort} onChange={(e) => setSort(e.target.value)} className="text-xs bg-slate-100 px-2.5 py-1.5 rounded-lg font-medium"><option value="score">Potential Score (High to Low)</option><option value="distance">Distance (Nearest first)</option></select>
                       </div>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="mr-desktop-table overflow-x-auto">
                       <table className="mr-responsive-table w-full text-left border-collapse">
                         <thead><tr className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
                           <th className="py-3 px-4">Doctor Name</th><th className="py-3 px-4">Specialty</th><th className="py-3 px-4">Clinic / Hospital</th><th className="py-3 px-4">Location</th><th className="py-3 px-4">Potential</th><th className="py-3 px-4 text-right">Distance</th>
@@ -788,6 +788,30 @@ export default function Home() {
                           </tr>)}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="mr-mobile-doctor-cards p-3 space-y-3">
+                      {loading && <div className="p-6 text-center text-sm text-slate-500">Loading doctors…</div>}
+                      {!loading && error && <div className="p-4 rounded-xl bg-red-50 text-sm text-red-700">{error}</div>}
+                      {!loading && !error && doctors.map((doctor) => (
+                        <button key={doctor.id} type="button" onClick={() => { setSelected(doctor); setSection("potential"); }}
+                          className="w-full text-left rounded-2xl border border-slate-200 bg-slate-50 p-4 active:scale-[.99]">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="font-black text-slate-900 truncate">{doctor.name}</div>
+                              <div className="text-xs text-slate-500 mt-1">{doctor.spec}</div>
+                            </div>
+                            <span className={(doctor.potential === "High" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800") + " shrink-0 font-black px-2.5 py-1 rounded-lg text-xs"}>{doctor.score}</span>
+                          </div>
+                          <div className="mt-3 grid grid-cols-1 gap-2 text-xs">
+                            <div className="flex items-center gap-2 text-slate-600"><span className="text-slate-400">Clinic</span><span className="font-semibold truncate">{doctor.clinic}</span></div>
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-slate-600 truncate">{doctor.loc}</span>
+                              <span className="font-mono text-slate-500 shrink-0">{doctor.dist}</span>
+                            </div>
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-slate-200 text-xs font-bold text-blue-700">Open doctor profile →</div>
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -817,13 +841,13 @@ export default function Home() {
 
           {section === "potential" && selectedDoctor && (
             <section className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900">Doctor Potential & Deep Profile</h2>
                   <p className="text-sm text-slate-500">Detailed performance & prescribing insights</p>
                 </div>
-                <div className="flex gap-2">
-                  <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button onClick={() => openPlanDialog(selectedDoctor)} className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button>
                     <button onClick={() => openSampleDialog(selectedDoctor)} className="bg-white border border-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">□ Issue Samples</button>
                   </div>
@@ -834,8 +858,8 @@ export default function Home() {
               <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white p-6 rounded-2xl shadow-md">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                   <div>
-                    <h3 className="text-xl font-black">{selectedDoctor.name}
-                      <span className="ml-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] uppercase font-bold px-2 py-1 rounded-full">{selectedDoctor.potential} Potential</span>
+                    <h3 className="text-xl font-black leading-tight">{selectedDoctor.name}
+                      <span className="ml-2 sm:ml-3 inline-block mt-2 sm:mt-0 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] uppercase font-bold px-2 py-1 rounded-full">{selectedDoctor.potential} Potential</span>
                     </h3>
                     <p className="text-blue-200 text-sm mt-1">{selectedDoctor.spec} · {selectedDoctor.clinic}</p>
                     <p className="text-xs text-slate-300 mt-2">📍 {selectedDoctor.loc} · {selectedDoctor.dist}</p>
