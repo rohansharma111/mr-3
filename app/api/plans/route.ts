@@ -218,7 +218,9 @@ export async function PATCH(request: NextRequest) {
   });
   if (!existing) return NextResponse.json({ error: "Plan not found" }, { status: 404 });
 
-  const plan = await prisma.$transaction(async (tx) => {
+  let plan;
+  try {
+    plan = await prisma.$transaction(async (tx) => {
     const updated = await tx.plan.update({
       where: { id: existing.id },
       data: {
@@ -250,9 +252,12 @@ export async function PATCH(request: NextRequest) {
     return updated;
   });
 
-  return NextResponse.json({
-    id: plan.id,
-    status: plan.status,
-    notes: plan.notes
-  });
+    return NextResponse.json({
+      id: plan.id,
+      status: plan.status,
+      notes: plan.notes
+    });
+  } catch {
+    return NextResponse.json({ error: "Unable to update plan" }, { status: 500 });
+  }
 }
