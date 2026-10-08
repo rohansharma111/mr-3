@@ -315,3 +315,8 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - No schema or business-data changes were made in this increment.
 - Full local typecheck/build validation remains pending because the connected environment cannot run the repository's networked npm/Prisma toolchain reliably.
 \n
+## Explorer and call-query hardening milestone
+- Hardened Doctor Explorer query parameters with bounded patch/specialty/search inputs and an explicit sort enum; malformed filters now return HTTP 400.
+- Hardened Calls history with explicit status validation and made the validated status filter actually constrain the database query.
+- No database schema or business-data changes were made.
+\n
