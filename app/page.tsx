@@ -1547,7 +1547,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[["Total Calls",callHistory.length],["Completed",callHistory.filter(c=>c.status==="COMPLETED").length],["Follow-ups",callHistory.filter(c=>/follow-up/i.test(c.outcome)).length],["Doctors Covered",new Set(callHistory.map(c=>c.doctorName)).size]].map(([label,value])=><div key={String(label)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><div className="text-xs uppercase tracking-wider font-semibold text-slate-400">{label}</div><div className="text-2xl font-black mt-1">{value}</div></div>)}
+                {[["Total Calls",callHistory.length],["Completed",callHistory.filter(c=>c.status==="COMPLETED").length],["Follow-ups",callHistory.filter(c=>/follow-up/i.test(c.outcome || "")).length],["Doctors Covered",new Set(callHistory.map(c=>c.doctorName)).size]].map(([label,value])=><div key={String(label)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm"><div className="text-xs uppercase tracking-wider font-semibold text-slate-400">{label}</div><div className="text-2xl font-black mt-1">{value}</div></div>)}
               </div>
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100"><h3 className="font-bold">Call History</h3><p className="text-xs text-slate-500 mt-1">Every saved call is persisted and auditable.</p></div>
