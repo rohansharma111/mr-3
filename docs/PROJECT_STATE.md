@@ -373,3 +373,10 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - This is a code-quality/lifecycle fix only; no stockist data, schema, or prototype visual behavior changed.
 - A new CI run for the corrected development head is still pending; do not mark lint/typecheck as passing until its result is inspected. The previous run's TypeScript step was skipped because lint failed first.
 - PR #7 remains open for validation only. Do not merge it or deploy production as part of this step.
+
+## CI typecheck follow-up — 2026-10-09
+
+- The latest PR #7 Quality Checks run passed ESLint (the prior stockist effect error is resolved) but exposed a TypeScript error in the My Calls follow-up metric: the call outcome field is nullable, while `RegExp.test` requires a string.
+- Updated the metric to test `c.outcome || ""`, preserving the existing count behavior while safely handling calls with no outcome value.
+- This is a null-safety fix only; no UI redesign, API behavior, database data, or schema was changed.
+- A fresh PR validation run should verify the fix. Do not merge PR #7 or deploy until the complete validation status is reviewed.
