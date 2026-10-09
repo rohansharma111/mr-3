@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.call.groupBy({
       by: ["doctorId"],
-      where: { userId: user.id, status: "COMPLETED", calledAt: { gte: start, lt: rangeEnd } },
+      where: { userId: user.id, isDemo: false, status: "COMPLETED", calledAt: { gte: start, lt: rangeEnd } },
       _count: { _all: true },
       orderBy: { _count: { doctorId: "desc" } },
       take: 5
