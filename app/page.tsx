@@ -225,6 +225,13 @@ export default function Home() {
   const [aiInput, setAiInput] = useState("");
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [locationLatitude, setLocationLatitude] = useState("");
+  const [locationLongitude, setLocationLongitude] = useState("");
+  const [locationText, setLocationText] = useState("");
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [locationSaving, setLocationSaving] = useState(false);
+  const [locationSaveMessage, setLocationSaveMessage] = useState("");
   const selectedDoctor = selected ?? doctors[0] ?? null;
 
   const sectionMeta: Record<string, { title: string; description: string }> = {
@@ -239,6 +246,26 @@ export default function Home() {
     reports: { title: "Reports", description: "Review performance metrics calculated from persisted activity." },
     notifications: { title: "Notifications", description: "Stay on top of workflow updates and actions." }
   };
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/me", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load current user");
+        return response.json();
+      })
+      .then((data) => { if (!cancelled) setCurrentUserRole(data?.user?.role ?? null); })
+      .catch(() => { if (!cancelled) setCurrentUserRole(null); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    setLocationLatitude(selectedDoctor?.exactLocation ? String(selectedDoctor.exactLocation.latitude) : "");
+    setLocationLongitude(selectedDoctor?.exactLocation ? String(selectedDoctor.exactLocation.longitude) : "");
+    setLocationText(selectedDoctor?.loc ?? "");
+    setLocationConfirmed(false);
+    setLocationSaveMessage("");
+  }, [selectedDoctor?.id, selectedDoctor?.exactLocation?.latitude, selectedDoctor?.exactLocation?.longitude, selectedDoctor?.loc]);
+
   const currentSection = sectionMeta[section] ?? sectionMeta.explorer;
   const navigate = (nextSection: string) => {
     setSection(nextSection);
@@ -711,6 +738,46 @@ export default function Home() {
     }
   };
 
+  const saveClinicLocation = async () => {
+    if (!selectedDoctor || !locationConfirmed || !locationLatitude.trim() || !locationLongitude.trim()) return;
+    const latitude = Number(locationLatitude);
+    const longitude = Number(locationLongitude);
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+      setLocationSaveMessage("Enter a valid latitude (−90 to 90) and longitude (−180 to 180).");
+      return;
+    }
+    setLocationSaving(true);
+    setLocationSaveMessage("");
+    try {
+      const response = await fetch("/api/doctors/" + selectedDoctor.id + "/location", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          latitude,
+          longitude,
+          ...(locationText.trim() ? { location: locationText.trim() } : {}),
+          confirmedClinicMatch: true
+        })
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "Unable to save clinic coordinates");
+      const updatedDoctor = {
+        ...selectedDoctor,
+        loc: data.doctor.location,
+        exactLocation: data.doctor.exactLocation
+      };
+      setDoctors((current) => current.map((doctor) => doctor.id === updatedDoctor.id ? { ...doctor, loc: updatedDoctor.loc, exactLocation: updatedDoctor.exactLocation } : doctor));
+      setSelected((current) => current?.id === updatedDoctor.id ? updatedDoctor : current);
+      setLocationText(updatedDoctor.loc);
+      setLocationSaveMessage("Coordinates saved and confirmation recorded in the audit log. Please re-check the map pin.");
+      setLocationConfirmed(false);
+    } catch (error) {
+      setLocationSaveMessage(error instanceof Error ? error.message : "Unable to save clinic coordinates");
+    } finally {
+      setLocationSaving(false);
+    }
+  };
+
   const writing = writingPattern ?? { categories: [], molecules: [], insight: "Writing pattern data is unavailable.", sourceLabel: "UNAVAILABLE", doctorSpecific: false };
   const selectedMapQuery = selectedDoctor
     ? [selectedDoctor.clinic, selectedDoctor.loc, patch, region, state, "India"].filter(Boolean).join(", ")
@@ -1006,9 +1073,37 @@ export default function Home() {
                     </div>
                     <p className="mt-3 text-[11px] leading-5 text-slate-500">
                       {selectedExactLocation
-                        ? "Map centered on the latitude/longitude saved in this doctor record. Verify that the coordinates point to the intended clinic before using them operationally."
-                        : "This demo record has no verified GPS coordinates. Google Maps is searching the clinic and locality text, which may return a similarly named place. Do not treat the result as the exact clinic until its coordinates are verified and saved."}
+                        ? "Map centered on the coordinates saved in this doctor record. Saved coordinates are not automatically proof of verification; check the pin against the clinic address."
+                        : "No coordinates are saved for this record. Google Maps is searching the clinic and locality text, which may return a similarly named place. Treat this as a search result, not an exact clinic location."}
                     </p>
+                    {currentUserRole === "ADMIN" && selectedDoctor && (
+                      <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">Admin · Set clinic coordinates</h4>
+                          <p className="mt-1 text-xs leading-5 text-slate-600">Open Google Maps, locate the exact clinic, then right-click the clinic entrance or tap and hold the point to copy its coordinates. Confirm the address before saving.</p>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <label className="text-xs font-semibold text-slate-700">Latitude
+                            <input type="number" step="any" min="-90" max="90" value={locationLatitude} onChange={(event) => { setLocationLatitude(event.target.value); setLocationConfirmed(false); }} placeholder="e.g. 19.1364" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+                          </label>
+                          <label className="text-xs font-semibold text-slate-700">Longitude
+                            <input type="number" step="any" min="-180" max="180" value={locationLongitude} onChange={(event) => { setLocationLongitude(event.target.value); setLocationConfirmed(false); }} placeholder="e.g. 72.8296" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+                          </label>
+                        </div>
+                        <label className="block text-xs font-semibold text-slate-700">Clinic address / locality (optional)
+                          <input value={locationText} onChange={(event) => setLocationText(event.target.value)} maxLength={300} placeholder="Corrected clinic address or locality" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+                        </label>
+                        <label className="flex items-start gap-2 text-xs leading-5 text-slate-700">
+                          <input type="checkbox" checked={locationConfirmed} onChange={(event) => setLocationConfirmed(event.target.checked)} className="mt-0.5 rounded border-slate-300" />
+                          <span>I checked the Google Maps pin and confirm these coordinates match this doctor’s intended clinic.</span>
+                        </label>
+                        {locationSaveMessage && <p role="status" className={"text-xs font-semibold " + (locationSaveMessage.startsWith("Coordinates saved") ? "text-emerald-700" : "text-red-700")}>{locationSaveMessage}</p>}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button type="button" onClick={() => { setLocationLatitude(""); setLocationLongitude(""); setLocationConfirmed(false); setLocationSaveMessage(""); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Clear coordinates</button>
+                          <button type="button" disabled={locationSaving || !locationConfirmed || !locationLatitude.trim() || !locationLongitude.trim()} onClick={saveClinicLocation} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{locationSaving ? "Saving…" : "Save clinic location"}</button>
+                        </div>
+                      </div>
+                    )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {doctors.map((doctor) => (
                         <button key={doctor.id} type="button"
