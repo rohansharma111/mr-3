@@ -41,23 +41,24 @@ export async function GET(request: NextRequest) {
       ...(status ? { status } : {})
     },
     include: {
-      doctor: { select: { name: true } },
+      doctor: { select: { name: true, specialty: { select: { name: true } } } },
       product: { select: { name: true } }
     },
     orderBy: { calledAt: "desc" },
     take: 50
   });
 
-  return NextResponse.json(calls.map((call) => ({
+  return NextResponse.json({ calls: calls.map((call) => ({
     id: call.id,
     doctorId: call.doctorId,
     doctorName: call.doctor.name,
+    specialty: call.doctor.specialty?.name ?? "—",
     productName: call.product?.name ?? null,
     status: call.status,
     outcome: call.outcome,
     notes: call.notes,
     calledAt: call.calledAt
-  })));
+  })) });
 }
 
 export async function POST(request: NextRequest) {
