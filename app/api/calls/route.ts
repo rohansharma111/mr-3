@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
   const calls = await prisma.call.findMany({
     where: {
       userId: user.id,
+      isDemo: false,
       ...(doctorId ? { doctorId } : {}),
       ...(status ? { status } : {})
     },
