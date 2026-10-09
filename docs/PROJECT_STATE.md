@@ -363,3 +363,13 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - GitHub source inspection confirms the active development tree contains the newer location hierarchy, exact-location Google Maps workflow, call-history fixes, mobile UI work, and the AI Support feature-flag path.
 - The repository now contains a GitHub Actions quality-check workflow, but no workflow run was available for the current main/development head when inspected. Do not treat CI as a successful build.
 - Local `npm install`, `npm run typecheck`, `npm run build`, and Prisma migration-baseline validation are still required before claiming the application is locally validated.
+
+
+## CI validation and stockist effect fix — 2026-10-09
+
+- Opened validation PR #7 from `development` to `main` without merging or deploying, to run the repository's Quality Checks workflow against the current implementation.
+- Inspected the preceding `main` CI run and found the blocking ESLint error in `app/components/stockist-panel.tsx`: calling the data loader directly from an effect triggered `react-hooks/set-state-in-effect`.
+- Refactored the initial stockist load to use an effect-owned fetch chain with an active/cancellation guard. The explicit Refresh button continues to use the shared loader and retains loading/error handling.
+- This is a code-quality/lifecycle fix only; no stockist data, schema, or prototype visual behavior changed.
+- A new CI run for the corrected development head is still pending; do not mark lint/typecheck as passing until its result is inspected. The previous run's TypeScript step was skipped because lint failed first.
+- PR #7 remains open for validation only. Do not merge it or deploy production as part of this step.
