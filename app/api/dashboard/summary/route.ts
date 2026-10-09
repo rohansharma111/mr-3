@@ -11,23 +11,23 @@ export async function GET() {
   try {
     const [doctorCount, highPotential, callCount, sampleUnits, specialties, sampleProducts] =
     await Promise.all([
-      prisma.doctor.count({ where: { isActive: true } }),
-      prisma.doctor.count({ where: { isActive: true, potential: "HIGH" } }),
-      prisma.call.count({ where: { userId: user.id } }),
+      prisma.doctor.count({ where: { isActive: true, isDemo: false } }),
+      prisma.doctor.count({ where: { isActive: true, isDemo: false, potential: "HIGH" } }),
+      prisma.call.count({ where: { userId: user.id, isDemo: false } }),
       prisma.sampleIssue.aggregate({
-        where: { userId: user.id, status: "ISSUED" },
+        where: { userId: user.id, isDemo: false, status: "ISSUED" },
         _sum: { quantity: true }
       }),
       prisma.doctor.groupBy({
         by: ["specialtyId"],
-        where: { isActive: true, specialtyId: { not: null } },
+        where: { isActive: true, isDemo: false, specialtyId: { not: null } },
         _count: { _all: true },
         orderBy: { _count: { specialtyId: "desc" } },
         take: 1
       }),
       prisma.sampleIssue.groupBy({
         by: ["productId"],
-        where: { userId: user.id, status: "ISSUED", productId: { not: null } },
+        where: { userId: user.id, isDemo: false, status: "ISSUED", productId: { not: null } },
         _sum: { quantity: true },
         orderBy: { _sum: { quantity: "desc" } },
         take: 1
