@@ -465,3 +465,12 @@ Correct the local `DATABASE_URL` to the Neon **development** branch and verify t
 - Local `npm run typecheck` previously completed with Prisma Client generation and no TypeScript errors.
 - Next validation is `npm run build`, which includes `prisma migrate deploy`; at this point its effective URL has been verified as development. Review the full build output and stop if it reports any unexpected migration or schema action. This is development validation only, not a production deployment.
 - Production remains untouched. Keep the `.env.local.backup` until validation is complete and never commit environment files or credentials.
+
+
+## Follow-up: local production build passed against development — 2026-10-09
+
+- The user reports `npm run build` passed after `.env.local` was corrected to the Neon development endpoint `ep-holy-dust-b4b2aby5-pooler.c-6.us-east-2.aws.neon.tech`.
+- The prior local validation also passed `npm run typecheck`, and `npx prisma migrate status` reported six migrations found and “Database schema is up to date!” against development.
+- Treat this as a successful local build against the verified development database only. No production deployment was performed and no production migration was run as part of this milestone.
+- Next: run the app locally and smoke-test authentication, Doctor Explorer/profile, call logging/history, samples, plans/targets, reports/notifications, and AI Support configuration/error handling. Verify persisted changes and server responses. Record failures before changing code; do not use production for test writes.
+- Keep `.env.local.backup` until local validation is complete, do not commit secrets, and keep this documentation updated after each significant milestone.
