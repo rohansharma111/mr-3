@@ -361,8 +361,8 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 ## Validation note — 2026-10-09
 
 - GitHub source inspection confirms the active development tree contains the newer location hierarchy, exact-location Google Maps workflow, call-history fixes, mobile UI work, and the AI Support feature-flag path.
-- The repository now contains a GitHub Actions quality-check workflow, but no workflow run was available for the current main/development head when inspected. Do not treat CI as a successful build.
-- Local `npm install`, `npm run typecheck`, `npm run build`, and Prisma migration-baseline validation are still required before claiming the application is locally validated.
+- GitHub Actions Quality Checks now pass ESLint, Prisma Client generation/typecheck, and a Next.js production compilation/build on the development PR head using an isolated placeholder database URL.
+- This CI result does not validate the repository's `npm run build` script end-to-end, because that script also invokes `prisma migrate deploy`. The development database migration baseline is still a separate prerequisite; the application has not been locally validated through that script.
 
 
 ## CI validation and stockist effect fix — 2026-10-09
@@ -383,9 +383,10 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 
 ## CI validation and isolated production-build check — 2026-10-09
 
-- The latest completed Quality Checks run for commit `34443817ca2b42c971d750ed9118b0d683e11859` passed both ESLint and TypeScript.
+- The completed Quality Checks run for commit `164c4a60fb4c9cb0c11429888f1984ff0a21c07b` passed every step: dependency installation, ESLint, Prisma Client generation/typecheck, and `npx next build`.
+- Run: https://github.com/rohansharma111/mr-3/actions/runs/37897491449
+- The build ran with the CI-only placeholder `DATABASE_URL` and placeholder environment values. It did not connect to Neon or apply database migrations.
 - Confirmed the development Neon branch remains `br-wandering-pond-b4wjpdlk`; the development database still has no `public._prisma_migrations` ledger. This remains an explicit migration-baseline prerequisite and has not been changed.
-- Expanded the GitHub Actions workflow to run `npx next build` after lint and typecheck, using only the isolated CI placeholder database URL and non-secret placeholder environment values.
 - CI deliberately does **not** run `npm run build`, because that project script also invokes `prisma migrate deploy`; the CI job must not apply migrations to any real database.
-- The new build step is awaiting its first result. Do not claim production-build validation until that run completes successfully.
+- This validates the Next.js build in CI, but does not validate the local migration-baseline workflow or an end-to-end deploy against a migrated database.
 - Neon production was not changed. PR #7 remains open for validation only; do not merge or deploy as part of this step.
