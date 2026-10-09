@@ -71,6 +71,9 @@ export async function GET(request: NextRequest) {
     dist: doctor.distanceKm ? doctor.distanceKm.toString() + " km" : "—",
     coords: doctor.mapX !== null && doctor.mapY !== null
       ? { x: Number(doctor.mapX), y: Number(doctor.mapY) }
+      : null,
+    exactLocation: doctor.latitude !== null && doctor.longitude !== null
+      ? { latitude: Number(doctor.latitude), longitude: Number(doctor.longitude) }
       : null
   })));
   } catch (error) {
