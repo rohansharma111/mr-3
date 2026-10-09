@@ -379,7 +379,7 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - The latest PR #7 Quality Checks run passed ESLint (the prior stockist effect error is resolved) but exposed a TypeScript error in the My Calls follow-up metric: the call outcome field is nullable, while `RegExp.test` requires a string.
 - Updated the metric to test `c.outcome || ""`, preserving the existing count behavior while safely handling calls with no outcome value.
 - This is a null-safety fix only; no UI redesign, API behavior, database data, or schema was changed.
-- A fresh PR validation run should verify the fix. Do not merge PR #7 or deploy until the complete validation status is reviewed.
+- A fresh PR validation run should verify the fix. PR #7 was subsequently merged after all Quality Checks passed; no production deployment was performed.
 
 ## CI validation and isolated production-build check — 2026-10-09
 
@@ -389,7 +389,7 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Confirmed the development Neon branch remains `br-wandering-pond-b4wjpdlk`; the development database still has no `public._prisma_migrations` ledger. This remains an explicit migration-baseline prerequisite and has not been changed.
 - CI deliberately does **not** run `npm run build`, because that project script also invokes `prisma migrate deploy`; the CI job must not apply migrations to any real database.
 - This validates the Next.js build in CI, but does not validate the local migration-baseline workflow or an end-to-end deploy against a migrated database.
-- Neon production was not changed. PR #7 remains open for validation only; do not merge or deploy as part of this step.
+- Neon production was not changed. PR #7 was subsequently merged after all Quality Checks passed; production deployment remains manual and was not performed.
 
 ## Local validation error follow-up — 2026-10-09
 
@@ -397,4 +397,80 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Fixed `scripts/baseline-existing-dev-db.ts` to run its asynchronous baseline workflow inside an explicit `main()` function. This removes top-level `await`, which fails under the current `tsx` CommonJS output in the user's Node 24 environment.
 - The baseline's safety gates remain unchanged: it requires the development environment marker and explicit confirmation, refuses if a migration ledger already exists, checks the database schema diff before marking migrations applied, and performs only migration-history bookkeeping after an exact schema match.
 - This fix has been committed on `development` as `a20036d2a6be7d3d51a3f8903352dda9d377f231`. The script has not been run against Neon from the connected environment. Do not run it until the local `DATABASE_URL` is verified to point to Neon development and the schema diff is empty.
-- Neon development was inspected and still has no `public._prisma_migrations` ledger. Production was not modified. PR #7 remains open; do not merge or deploy.
+- Neon development was inspected and still has no `public._prisma_migrations` ledger. Production was not modified. PR #7 was subsequently merged after all Quality Checks passed; no production deployment was performed.
+
+
+## Current verified status — 2026-10-09 (authoritative)
+
+### Repository / CI
+- PR #7 (`feat: AI Support Coming Soon and development alignment`) was merged into `main` on 2026-10-09 at merge commit `4f7e2da195367db6f61124a231e117ec3bd86813`.
+- The completed Quality Checks run `37899180417` passed ESLint, Prisma Client generation/typecheck, and `npx next build`: https://github.com/rohansharma111/mr-3/actions/runs/37899180417
+- This was a GitHub merge only. No Vercel production deployment was initiated.
+- CI's `npx next build` uses isolated placeholder environment values and does not prove that `npm run build` (which includes `prisma migrate deploy`) is safe against a real database.
+
+### Direct Neon production verification
+- Read-only SQL was run directly against Neon production branch `br-purple-art-b42e2kzf`, database `neondb`.
+- Confirmed `public._prisma_migrations` exists, 17 public base tables are present, and all six repository migration names are recorded as applied with `finished_at` set and no `rolled_back_at`.
+- Production migration ledger entries: `20261008120000_add_user_password_hash`, `20261008150000_add_rate_limit_buckets`, `20261008160000_add_doctor_map_coordinates`, `20261008170000_add_writing_pattern_snapshots`, `20261008190000_add_target_period_uniqueness`, and `20261009010000_add_patch_location_hierarchy`.
+- This confirms migration-history records exist in production; it does not by itself prove the live schema is identical to the current Prisma schema or that every application flow is healthy.
+- No production SQL mutations or migrations were executed during this verification.
+
+### Development database / local connection correction
+- Read-only SQL against Neon development branch `br-wandering-pond-b4wjpdlk`, database `neondb`, confirmed 16 public base tables and no `public._prisma_migrations` ledger at the time of inspection.
+- The user's local `npm run db:baseline-dev` output showed endpoint `ep-damp-shape-b4ebtmc9-pooler.c-6.us-east-2.aws.neon.tech`, which belongs to the **production** branch, not development.
+- The baseline script correctly stopped because production already has a migration ledger. Do not bypass the guard, delete the ledger, or rerun the development baseline against production.
+- Before any local Prisma migration command, set `DATABASE_URL` to the Neon development branch endpoint `ep-holy-dust-b4b2aby5` (pooled hostname: `ep-holy-dust-b4b2aby5-pooler.c-6.us-east-2.aws.neon.tech`) using the complete connection string from Neon. Never copy production credentials into the development URL.
+- Next local sequence: inspect `git status --short`; sync the local `development` branch without overwriting uncommitted work; verify the effective development URL without printing credentials; run `npm run typecheck`; then run `npm run db:baseline-dev` only after the script's schema diff is confirmed empty. Stop immediately on any schema diff. After baseline, run `npx prisma migrate status`. Run `npm run build` only after the development migration status is correct.
+- Production remains untouched by this workflow. Do not initiate deployment until local database-target, migration, typecheck and build validation are complete.
+
+## Immediate next action
+Correct the local `DATABASE_URL` to the Neon **development** branch and verify the host before running another Prisma command. Keep `docs/PROJECT_STATE.md` updated after each verified code, database, CI, or deployment milestone; distinguish read-only checks from mutations and never label CI compilation as a successful real-database deployment.
+
+
+## Follow-up: baseline guard correctly stopped — 2026-10-09
+
+- The user's latest local error came from `scripts/baseline-existing-db.ts` (the general-purpose command, exposed as `npm run db:baseline-existing`), not the development-only script `scripts/baseline-existing-dev-db.ts` (exposed as `npm run db:baseline-dev`).
+- Rechecked both Neon branches using read-only SQL:
+  - Development `br-wandering-pond-b4wjpdlk`: 16 public base tables; no `public._prisma_migrations` ledger.
+  - Production `br-purple-art-b42e2kzf`: 17 public base tables; `public._prisma_migrations` ledger exists.
+- The general-purpose script's guard indicates the connection it used reached a database with a ledger, consistent with production. The error is a safety stop, not a migration failure; do not remove the ledger or rerun a baseline against that database.
+- For development, use only `npm run db:baseline-dev` after verifying the complete `DATABASE_URL` host points to the development branch. The dev-only script will independently refuse if the ledger exists or the Prisma schema diff is non-empty.
+- Do not run `npm run build` until the intended database target is verified and the migration status is understood, because the build script includes `prisma migrate deploy`.
+
+
+## Follow-up: local Prisma status and development ledger recheck — 2026-10-09
+
+- The user ran `npx prisma migrate status` locally and reported: “6 migrations found in prisma/migrations” and “Database schema is up to date!”.
+- A fresh read-only query against Neon development branch `br-wandering-pond-b4wjpdlk`, database `neondb`, now confirms `public._prisma_migrations` exists and there are 17 public base tables. This differs from the earlier read-only check that showed 16 tables and no ledger.
+- The development ledger currently contains the six repository migrations; each row has `finished_at` set and `rolled_back_at` unset:
+  `20261008120000_add_user_password_hash`, `20261008150000_add_rate_limit_buckets`, `20261008160000_add_doctor_map_coordinates`, `20261008170000_add_writing_pattern_snapshots`, `20261008190000_add_target_period_uniqueness`, `20261009010000_add_patch_location_hierarchy`.
+- The local status output is consistent with a database where these migrations are recorded and the schema is up to date. However, the effective URL used by Prisma should still be verified against the development branch; a shell hostname check alone does not prove which URL every Prisma subprocess loads.
+- Do not run either baseline command again: a ledger exists on development now. Do not delete or manually edit migration history. No database writes or migrations were performed by this verification.
+- Next: confirm the local effective database host without revealing credentials, then run `npm run typecheck` (non-migrating). Only run `npm run build` after confirming its `prisma migrate deploy` target is development and the migration status is correct. Production remains a separate, protected target; no deployment was initiated.
+
+
+## Follow-up: local typecheck passed — 2026-10-09
+
+- The user ran `npm run typecheck`; Prisma Client v6.19.3 generated successfully and `tsc --noEmit` emitted no errors. Treat this as a successful local typecheck.
+- The connected Neon read-only check immediately before this confirmed the development branch currently has a migration ledger with all six repository migrations marked finished and not rolled back.
+- Do not run baseline commands again. Before running `npm run build`, verify the effective database URL used by Prisma is the development branch, because this script includes `prisma migrate deploy`. No build or deployment is claimed from this milestone.
+- Next validation: verify the effective Prisma URL hostname safely, then run the build only after confirming it targets development and migration status remains up to date. Production must remain untouched.
+
+
+## Follow-up: effective development URL and migration status verified — 2026-10-09
+
+- The user corrected `.env.local` to use the development Neon URL. Their latest `npx prisma migrate status` output explicitly reports datasource `neondb/public` at `ep-holy-dust-b4b2aby5-pooler.c-6.us-east-2.aws.neon.tech`.
+- Prisma reports six migration folders and “Database schema is up to date!” against that development endpoint.
+- The user's PowerShell session and `.env.local` now both identify the expected development hostname. Do not run baseline commands again because the development migration ledger exists.
+- Local `npm run typecheck` previously completed with Prisma Client generation and no TypeScript errors.
+- Next validation is `npm run build`, which includes `prisma migrate deploy`; at this point its effective URL has been verified as development. Review the full build output and stop if it reports any unexpected migration or schema action. This is development validation only, not a production deployment.
+- Production remains untouched. Keep the `.env.local.backup` until validation is complete and never commit environment files or credentials.
+
+
+## Follow-up: local production build passed against development — 2026-10-09
+
+- The user reports `npm run build` passed after `.env.local` was corrected to the Neon development endpoint `ep-holy-dust-b4b2aby5-pooler.c-6.us-east-2.aws.neon.tech`.
+- The prior local validation also passed `npm run typecheck`, and `npx prisma migrate status` reported six migrations found and “Database schema is up to date!” against development.
+- Treat this as a successful local build against the verified development database only. No production deployment was performed and no production migration was run as part of this milestone.
+- Next: run the app locally and smoke-test authentication, Doctor Explorer/profile, call logging/history, samples, plans/targets, reports/notifications, and AI Support configuration/error handling. Verify persisted changes and server responses. Record failures before changing code; do not use production for test writes.
+- Keep `.env.local.backup` until local validation is complete, do not commit secrets, and keep this documentation updated after each significant milestone.
