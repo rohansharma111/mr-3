@@ -6,6 +6,18 @@ import { StockistPanel } from "./components/stockist-panel";
 
 type Product = { id: string; name: string; molecule: string | null; category: string | null };
 
+type CallHistoryItem = {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  productName: string | null;
+  status: "PLANNED" | "COMPLETED" | "MISSED" | "CANCELLED";
+  outcome: string | null;
+  notes: string | null;
+  calledAt: string;
+};
+
 type SampleIssue = {
   id: string; doctorId: string; doctorName: string; specialty: string;
   productId: string; productName: string; molecule: string; quantity: number;
@@ -173,7 +185,7 @@ export default function Home() {
   const [callNotes, setCallNotes] = useState("");
   const [callSaving, setCallSaving] = useState(false);
   const [callMessage, setCallMessage] = useState("");
-  const [callHistory, setCallHistory] = useState<any[]>([]);
+  const [callHistory, setCallHistory] = useState<CallHistoryItem[]>([]);
   const [callsLoading, setCallsLoading] = useState(false);
   const [callFilter, setCallFilter] = useState("ALL");
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -1229,7 +1241,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
                         <b>Prototype-source analytics</b>
-                        <p className="mt-1">The following writing-pattern data comes from the supplied prototype and is not doctor-specific. It must not be interpreted as this doctor's prescribing history.</p>
+                        <p className="mt-1">The following writing-pattern data comes from the supplied prototype and is not doctor-specific. It must not be interpreted as this doctor&apos;s prescribing history.</p>
                       </div>
                       {doctorProfile?.writingPattern ? (
                         <>
