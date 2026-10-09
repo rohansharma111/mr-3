@@ -52,6 +52,7 @@ type Doctor = {
   potential: "High" | "Medium" | "Low";
   dist: string;
   coords: { x: number; y: number } | null;
+  exactLocation: { latitude: number; longitude: number } | null;
 };
 
 type DoctorProfile = {
@@ -714,8 +715,17 @@ export default function Home() {
   const selectedMapQuery = selectedDoctor
     ? [selectedDoctor.clinic, selectedDoctor.loc, patch, region, state, "India"].filter(Boolean).join(", ")
     : [patch, region, state, "India"].filter(Boolean).join(", ");
-  const googleMapsSearchUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(selectedMapQuery);
-  const googleMapsEmbedUrl = "https://maps.google.com/maps?q=" + encodeURIComponent(selectedMapQuery) + "&output=embed";
+  const selectedExactLocation = selectedDoctor?.exactLocation ?? null;
+  const googleMapsSearchUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(
+    selectedExactLocation
+      ? selectedExactLocation.latitude + "," + selectedExactLocation.longitude
+      : selectedMapQuery
+  );
+  const googleMapsEmbedUrl = "https://maps.google.com/maps?q=" + encodeURIComponent(
+    selectedExactLocation
+      ? selectedExactLocation.latitude + "," + selectedExactLocation.longitude
+      : selectedMapQuery
+  ) + "&output=embed";
 
   return (
     <div className="mr-app-shell h-screen overflow-hidden flex bg-slate-50">
@@ -974,6 +984,9 @@ export default function Home() {
                       <div>
                         <h3 className="font-bold text-slate-800">📍 Google Maps — {selectedDoctor?.name ?? patch}</h3>
                         <p className="text-xs text-slate-500 mt-1">{selectedDoctor ? selectedDoctor.clinic + " · " + selectedDoctor.loc : patch + " · " + region}</p>
+                      <span className={"mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold " + (selectedExactLocation ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
+                        {selectedExactLocation ? "Coordinates saved in doctor record" : "Location not verified — searching by clinic text"}
+                      </span>
                       </div>
                       <a href={googleMapsSearchUrl} target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">
@@ -992,7 +1005,9 @@ export default function Home() {
                       />
                     </div>
                     <p className="mt-3 text-[11px] leading-5 text-slate-500">
-                      Google Maps is searching by the clinic and location text in this demo dataset. The source data does not contain verified street addresses or GPS coordinates, so confirm the result in Google Maps before treating it as the doctor’s exact location.
+                      {selectedExactLocation
+                        ? "Map centered on the latitude/longitude saved in this doctor record. Verify that the coordinates point to the intended clinic before using them operationally."
+                        : "This demo record has no verified GPS coordinates. Google Maps is searching the clinic and locality text, which may return a similarly named place. Do not treat the result as the exact clinic until its coordinates are verified and saved."}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {doctors.map((doctor) => (
