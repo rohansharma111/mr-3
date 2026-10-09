@@ -455,3 +455,13 @@ Correct the local `DATABASE_URL` to the Neon **development** branch and verify t
 - The connected Neon read-only check immediately before this confirmed the development branch currently has a migration ledger with all six repository migrations marked finished and not rolled back.
 - Do not run baseline commands again. Before running `npm run build`, verify the effective database URL used by Prisma is the development branch, because this script includes `prisma migrate deploy`. No build or deployment is claimed from this milestone.
 - Next validation: verify the effective Prisma URL hostname safely, then run the build only after confirming it targets development and migration status remains up to date. Production must remain untouched.
+
+
+## Follow-up: effective development URL and migration status verified — 2026-10-09
+
+- The user corrected `.env.local` to use the development Neon URL. Their latest `npx prisma migrate status` output explicitly reports datasource `neondb/public` at `ep-holy-dust-b4b2aby5-pooler.c-6.us-east-2.aws.neon.tech`.
+- Prisma reports six migration folders and “Database schema is up to date!” against that development endpoint.
+- The user's PowerShell session and `.env.local` now both identify the expected development hostname. Do not run baseline commands again because the development migration ledger exists.
+- Local `npm run typecheck` previously completed with Prisma Client generation and no TypeScript errors.
+- Next validation is `npm run build`, which includes `prisma migrate deploy`; at this point its effective URL has been verified as development. Review the full build output and stop if it reports any unexpected migration or schema action. This is development validation only, not a production deployment.
+- Production remains untouched. Keep the `.env.local.backup` until validation is complete and never commit environment files or credentials.
