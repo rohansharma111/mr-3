@@ -425,3 +425,14 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 
 ## Immediate next action
 Correct the local `DATABASE_URL` to the Neon **development** branch and verify the host before running another Prisma command. Keep `docs/PROJECT_STATE.md` updated after each verified code, database, CI, or deployment milestone; distinguish read-only checks from mutations and never label CI compilation as a successful real-database deployment.
+
+
+## Follow-up: baseline guard correctly stopped — 2026-10-09
+
+- The user's latest local error came from `scripts/baseline-existing-db.ts` (the general-purpose command, exposed as `npm run db:baseline-existing`), not the development-only script `scripts/baseline-existing-dev-db.ts` (exposed as `npm run db:baseline-dev`).
+- Rechecked both Neon branches using read-only SQL:
+  - Development `br-wandering-pond-b4wjpdlk`: 16 public base tables; no `public._prisma_migrations` ledger.
+  - Production `br-purple-art-b42e2kzf`: 17 public base tables; `public._prisma_migrations` ledger exists.
+- The general-purpose script's guard indicates the connection it used reached a database with a ledger, consistent with production. The error is a safety stop, not a migration failure; do not remove the ledger or rerun a baseline against that database.
+- For development, use only `npm run db:baseline-dev` after verifying the complete `DATABASE_URL` host points to the development branch. The dev-only script will independently refuse if the ledger exists or the Prisma schema diff is non-empty.
+- Do not run `npm run build` until the intended database target is verified and the migration status is understood, because the build script includes `prisma migrate deploy`.
