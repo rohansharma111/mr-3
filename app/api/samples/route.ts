@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         quantity: parsed.data.quantity,
         status: parsed.data.status,
-        isDemo: true
+        isDemo: false
       }
     });
 
