@@ -380,3 +380,12 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Updated the metric to test `c.outcome || ""`, preserving the existing count behavior while safely handling calls with no outcome value.
 - This is a null-safety fix only; no UI redesign, API behavior, database data, or schema was changed.
 - A fresh PR validation run should verify the fix. Do not merge PR #7 or deploy until the complete validation status is reviewed.
+
+## CI validation and isolated production-build check — 2026-10-09
+
+- The latest completed Quality Checks run for commit `34443817ca2b42c971d750ed9118b0d683e11859` passed both ESLint and TypeScript.
+- Confirmed the development Neon branch remains `br-wandering-pond-b4wjpdlk`; the development database still has no `public._prisma_migrations` ledger. This remains an explicit migration-baseline prerequisite and has not been changed.
+- Expanded the GitHub Actions workflow to run `npx next build` after lint and typecheck, using only the isolated CI placeholder database URL and non-secret placeholder environment values.
+- CI deliberately does **not** run `npm run build`, because that project script also invokes `prisma migrate deploy`; the CI job must not apply migrations to any real database.
+- The new build step is awaiting its first result. Do not claim production-build validation until that run completes successfully.
+- Neon production was not changed. PR #7 remains open for validation only; do not merge or deploy as part of this step.
