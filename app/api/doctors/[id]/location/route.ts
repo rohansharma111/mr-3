@@ -7,7 +7,8 @@ const paramsSchema = z.object({ id: z.string().uuid() });
 const locationSchema = z.object({
   latitude: z.number().finite().min(-90).max(90),
   longitude: z.number().finite().min(-180).max(180),
-  location: z.string().trim().min(2).max(300).optional()
+  location: z.string().trim().min(2).max(300).optional(),
+  confirmedClinicMatch: z.literal(true)
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,7 +51,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             previousLongitude: doctor.longitude?.toString() ?? null,
             latitude: parsedBody.data.latitude,
             longitude: parsedBody.data.longitude,
-            locationUpdated: Boolean(parsedBody.data.location)
+            locationUpdated: Boolean(parsedBody.data.location),
+            confirmedClinicMatch: parsedBody.data.confirmedClinicMatch
           }
         }
       });
