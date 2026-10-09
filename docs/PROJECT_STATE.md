@@ -436,3 +436,14 @@ Correct the local `DATABASE_URL` to the Neon **development** branch and verify t
 - The general-purpose script's guard indicates the connection it used reached a database with a ledger, consistent with production. The error is a safety stop, not a migration failure; do not remove the ledger or rerun a baseline against that database.
 - For development, use only `npm run db:baseline-dev` after verifying the complete `DATABASE_URL` host points to the development branch. The dev-only script will independently refuse if the ledger exists or the Prisma schema diff is non-empty.
 - Do not run `npm run build` until the intended database target is verified and the migration status is understood, because the build script includes `prisma migrate deploy`.
+
+
+## Follow-up: local Prisma status and development ledger recheck — 2026-10-09
+
+- The user ran `npx prisma migrate status` locally and reported: “6 migrations found in prisma/migrations” and “Database schema is up to date!”.
+- A fresh read-only query against Neon development branch `br-wandering-pond-b4wjpdlk`, database `neondb`, now confirms `public._prisma_migrations` exists and there are 17 public base tables. This differs from the earlier read-only check that showed 16 tables and no ledger.
+- The development ledger currently contains the six repository migrations; each row has `finished_at` set and `rolled_back_at` unset:
+  `20261008120000_add_user_password_hash`, `20261008150000_add_rate_limit_buckets`, `20261008160000_add_doctor_map_coordinates`, `20261008170000_add_writing_pattern_snapshots`, `20261008190000_add_target_period_uniqueness`, `20261009010000_add_patch_location_hierarchy`.
+- The local status output is consistent with a database where these migrations are recorded and the schema is up to date. However, the effective URL used by Prisma should still be verified against the development branch; a shell hostname check alone does not prove which URL every Prisma subprocess loads.
+- Do not run either baseline command again: a ledger exists on development now. Do not delete or manually edit migration history. No database writes or migrations were performed by this verification.
+- Next: confirm the local effective database host without revealing credentials, then run `npm run typecheck` (non-migrating). Only run `npm run build` after confirming its `prisma migrate deploy` target is development and the migration status is correct. Production remains a separate, protected target; no deployment was initiated.
