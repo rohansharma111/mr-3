@@ -346,3 +346,20 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Notifications GET/PATCH, products GET, doctors GET, and stockists GET now sanitize unexpected database/runtime failures.
 - Plans PATCH now has the same controlled error boundary.
 - These changes do not alter authentication, validation, query scope, or response behavior on successful requests.
+
+
+## Development reconciliation and AI Support UI milestone — 2026-10-09
+
+- Reconciled the active `development` branch to the newer verified `main` implementation before continuing work. The previous development-only JSX/mobile navigation commit was already represented in the newer main tree, so the development ref was safely aligned to main rather than building on stale code.
+- Verified that the development Neon branch remains `br-wandering-pond-b4wjpdlk`; production remains `br-purple-art-b42e2kzf` and was not modified.
+- Detected that the committed `20261009010000_add_patch_location_hierarchy` migration existed in source but its effects were missing from the development database. Applied only its additive SQL to development: `patches.state`, `patches.region`, and `patches_state_region_idx`.
+- Verified all 7 development patches now resolve to `Maharashtra` / `Andheri Region`, and verified all 10 development doctors currently have persisted latitude/longitude values. No production database change was made.
+- Added `NEXT_PUBLIC_AI_SUPPORT_ENABLED=false` to `.env.example`.
+- Updated the AI Support frontend to show an explicit prototype-consistent `Coming Soon` state while the feature flag is disabled. The server-side AI integration remains intact and is not removed; enabling the public feature flag is a deliberate future configuration step.
+- Added a client-side guard so AI requests are not sent while the feature is disabled. No AI credentials or secrets were added.
+
+## Validation note — 2026-10-09
+
+- GitHub source inspection confirms the active development tree contains the newer location hierarchy, exact-location Google Maps workflow, call-history fixes, mobile UI work, and the AI Support feature-flag path.
+- The repository now contains a GitHub Actions quality-check workflow, but no workflow run was available for the current main/development head when inspected. Do not treat CI as a successful build.
+- Local `npm install`, `npm run typecheck`, `npm run build`, and Prisma migration-baseline validation are still required before claiming the application is locally validated.
