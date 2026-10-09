@@ -1157,7 +1157,7 @@ export default function Home() {
                 <div className="flex flex-wrap gap-2">
                   <div className="flex flex-wrap gap-2">
                     <button onClick={() => openPlanDialog(selectedDoctor)} className="bg-blue-50 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">＋ Add to Plan</button>
-                    <button onClick={() => openSampleDialog(selectedDoctor)} className="bg-white border border-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs">□ Issue Samples</button>
+                    <button onClick={() => openSampleDialog(selectedDoctor)} className="bg-white border border-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-xl text-xs inline-flex items-center gap-2"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M9 3h6" /><path d="M10 3v6.5L5.7 17a3 3 0 0 0 2.6 4.5h7.4a3 3 0 0 0 2.6-4.5L14 9.5V3" /><path d="M8 15h8" /><path d="M9.5 18h.01M14 17h.01" /></svg><span>Issue Samples</span></button>
                   </div>
                   <button onClick={() => { setCallMessage(""); setCallNotes(""); setCallOpen(true); }} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-xl text-xs">☎ Log Call</button>
                 </div>
