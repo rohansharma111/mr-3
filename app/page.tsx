@@ -263,8 +263,11 @@ export default function Home() {
     setLocationLongitude(selectedDoctor?.exactLocation ? String(selectedDoctor.exactLocation.longitude) : "");
     setLocationText(selectedDoctor?.loc ?? "");
     setLocationConfirmed(false);
-    setLocationSaveMessage("");
   }, [selectedDoctor?.id, selectedDoctor?.exactLocation?.latitude, selectedDoctor?.exactLocation?.longitude, selectedDoctor?.loc]);
+
+  useEffect(() => {
+    setLocationSaveMessage("");
+  }, [selectedDoctor?.id]);
 
   const currentSection = sectionMeta[section] ?? sectionMeta.explorer;
   const navigate = (nextSection: string) => {
@@ -1099,7 +1102,7 @@ export default function Home() {
                         </label>
                         {locationSaveMessage && <p role="status" className={"text-xs font-semibold " + (locationSaveMessage.startsWith("Coordinates saved") ? "text-emerald-700" : "text-red-700")}>{locationSaveMessage}</p>}
                         <div className="flex flex-wrap items-center gap-2">
-                          <button type="button" onClick={() => { setLocationLatitude(""); setLocationLongitude(""); setLocationConfirmed(false); setLocationSaveMessage(""); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Clear coordinates</button>
+                          <button type="button" onClick={() => { setLocationLatitude(""); setLocationLongitude(""); setLocationConfirmed(false); setLocationSaveMessage(""); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Clear form</button>
                           <button type="button" disabled={locationSaving || !locationConfirmed || !locationLatitude.trim() || !locationLongitude.trim()} onClick={saveClinicLocation} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{locationSaving ? "Saving…" : "Save clinic location"}</button>
                         </div>
                       </div>
