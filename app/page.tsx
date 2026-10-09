@@ -1094,7 +1094,7 @@ export default function Home() {
                           </label>
                         </div>
                         <label className="block text-xs font-semibold text-slate-700">Clinic address / locality (optional)
-                          <input value={locationText} onChange={(event) => setLocationText(event.target.value)} maxLength={300} placeholder="Corrected clinic address or locality" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+                          <input value={locationText} onChange={(event) => { setLocationText(event.target.value); setLocationConfirmed(false); }} maxLength={300} placeholder="Corrected clinic address or locality" className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm" />
                         </label>
                         <label className="flex items-start gap-2 text-xs leading-5 text-slate-700">
                           <input type="checkbox" checked={locationConfirmed} onChange={(event) => setLocationConfirmed(event.target.checked)} className="mt-0.5 rounded border-slate-300" />
@@ -1102,7 +1102,7 @@ export default function Home() {
                         </label>
                         {locationSaveMessage && <p role="status" className={"text-xs font-semibold " + (locationSaveMessage.startsWith("Coordinates saved") ? "text-emerald-700" : "text-red-700")}>{locationSaveMessage}</p>}
                         <div className="flex flex-wrap items-center gap-2">
-                          <button type="button" onClick={() => { setLocationLatitude(""); setLocationLongitude(""); setLocationConfirmed(false); setLocationSaveMessage(""); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Clear form</button>
+                          <button type="button" onClick={() => { setLocationLatitude(""); setLocationLongitude(""); setLocationConfirmed(false); setLocationSaveMessage(""); }} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Clear coordinate fields</button>
                           <button type="button" disabled={locationSaving || !locationConfirmed || !locationLatitude.trim() || !locationLongitude.trim()} onClick={saveClinicLocation} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{locationSaving ? "Saving…" : "Save clinic location"}</button>
                         </div>
                       </div>
