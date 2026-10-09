@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   ] = await Promise.all([
     prisma.call.groupBy({
       by: ["status"],
-      where: { userId: user.id, calledAt: { gte: start, lt: rangeEnd } },
+      where: { userId: user.id, isDemo: false, calledAt: { gte: start, lt: rangeEnd } },
       _count: { _all: true }
     }),
     prisma.sampleIssue.aggregate({
