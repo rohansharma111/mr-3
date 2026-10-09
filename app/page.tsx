@@ -711,16 +711,11 @@ export default function Home() {
   };
 
   const writing = writingPattern ?? { categories: [], molecules: [], insight: "Writing pattern data is unavailable.", sourceLabel: "UNAVAILABLE", doctorSpecific: false };
-  const mapPoints = useMemo(
-    () => doctors
-      .filter((doctor) => doctor.coords !== null)
-      .map((doctor) => ({
-        doctor,
-        left: doctor.coords?.x ?? 0,
-        top: doctor.coords?.y ?? 0
-      })),
-    [doctors]
-  );
+  const selectedMapQuery = selectedDoctor
+    ? [selectedDoctor.clinic, selectedDoctor.loc, patch, region, state, "India"].filter(Boolean).join(", ")
+    : [patch, region, state, "India"].filter(Boolean).join(", ");
+  const googleMapsSearchUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(selectedMapQuery);
+  const googleMapsEmbedUrl = "https://maps.google.com/maps?q=" + encodeURIComponent(selectedMapQuery) + "&output=embed";
 
   return (
     <div className="mr-app-shell h-screen overflow-hidden flex bg-slate-50">
@@ -975,12 +970,38 @@ export default function Home() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-                    <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-slate-800">📍 Doctor Location Map — {patch}</h3><span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-semibold">Persisted reference coordinates</span></div>
-                    <div className="relative h-64 bg-slate-900 rounded-xl overflow-hidden border border-slate-800">
-                      <div className="absolute inset-0 opacity-20" style={{backgroundImage:"radial-gradient(#60a5fa 1px, transparent 1px)",backgroundSize:"24px 24px"}} />
-                      {mapPoints.map(({doctor,left,top}) => <button key={doctor.id} onClick={() => {setSelected(doctor);setSection("potential");}} style={{left:left+"%",top:top+"%"}}
-                        className={"absolute flex items-center justify-center w-7 h-7 rounded-full shadow-lg border-2 border-white text-xs font-black " + (selectedDoctor?.id===doctor.id ? "bg-blue-600 text-white" : "bg-red-600 text-white")}>●</button>)}
-                      <div className="absolute bottom-3 left-3 bg-slate-900/90 border border-slate-700 text-white text-xs px-3 py-1.5 rounded-lg">Reference map: <span className="text-emerald-400 font-bold">persisted coordinates</span></div>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                      <div>
+                        <h3 className="font-bold text-slate-800">📍 Google Maps — {selectedDoctor?.name ?? patch}</h3>
+                        <p className="text-xs text-slate-500 mt-1">{selectedDoctor ? selectedDoctor.clinic + " · " + selectedDoctor.loc : patch + " · " + region}</p>
+                      </div>
+                      <a href={googleMapsSearchUrl} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700">
+                        Open in Google Maps ↗
+                      </a>
+                    </div>
+                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                      <iframe
+                        key={selectedDoctor?.id ?? patch}
+                        title={"Google Maps search for " + (selectedDoctor?.name ?? patch)}
+                        src={googleMapsEmbedUrl}
+                        className="block h-72 sm:h-80 w-full border-0"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        allowFullScreen
+                      />
+                    </div>
+                    <p className="mt-3 text-[11px] leading-5 text-slate-500">
+                      Google Maps is searching by the clinic and location text in this demo dataset. The source data does not contain verified street addresses or GPS coordinates, so confirm the result in Google Maps before treating it as the doctor’s exact location.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {doctors.map((doctor) => (
+                        <button key={doctor.id} type="button"
+                          onClick={() => setSelected(doctor)}
+                          className={"rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors " + (selectedDoctor?.id === doctor.id ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:border-blue-300")}>
+                          {doctor.name}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
