@@ -390,3 +390,11 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - CI deliberately does **not** run `npm run build`, because that project script also invokes `prisma migrate deploy`; the CI job must not apply migrations to any real database.
 - This validates the Next.js build in CI, but does not validate the local migration-baseline workflow or an end-to-end deploy against a migrated database.
 - Neon production was not changed. PR #7 remains open for validation only; do not merge or deploy as part of this step.
+
+## Local validation error follow-up — 2026-10-09
+
+- The local TypeScript error at the My Calls follow-up metric is the nullable `outcome` field being passed to `RegExp.test`. The active GitHub `development` version already uses `c.outcome || ""`; if the local checkout still reports the error, sync/check out the latest `development` commit or apply that null-safe fallback locally.
+- Fixed `scripts/baseline-existing-dev-db.ts` to run its asynchronous baseline workflow inside an explicit `main()` function. This removes top-level `await`, which fails under the current `tsx` CommonJS output in the user's Node 24 environment.
+- The baseline's safety gates remain unchanged: it requires the development environment marker and explicit confirmation, refuses if a migration ledger already exists, checks the database schema diff before marking migrations applied, and performs only migration-history bookkeeping after an exact schema match.
+- This fix has been committed on `development` as `a20036d2a6be7d3d51a3f8903352dda9d377f231`. The script has not been run against Neon from the connected environment. Do not run it until the local `DATABASE_URL` is verified to point to Neon development and the schema diff is empty.
+- Neon development was inspected and still has no `public._prisma_migrations` ledger. Production was not modified. PR #7 remains open; do not merge or deploy.
