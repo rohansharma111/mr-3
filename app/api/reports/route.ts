@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.sampleIssue.groupBy({
       by: ["productId"],
-      where: { userId: user.id, status: "ISSUED", issuedAt: { gte: start, lt: rangeEnd }, productId: { not: null } },
+      where: { userId: user.id, isDemo: false, status: "ISSUED", issuedAt: { gte: start, lt: rangeEnd }, productId: { not: null } },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: "desc" } },
       take: 5
