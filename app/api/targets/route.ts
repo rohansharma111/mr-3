@@ -144,7 +144,8 @@ export async function POST(request: NextRequest) {
             periodEnd: end,
             targetCalls: parsed.data.targetCalls,
             targetSamples: parsed.data.targetSamples,
-            targetConversions: parsed.data.targetConversions
+            targetConversions: parsed.data.targetConversions,
+            isDemo: false
           }
         });
 
