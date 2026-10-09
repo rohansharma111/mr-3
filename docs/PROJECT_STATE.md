@@ -447,3 +447,11 @@ Correct the local `DATABASE_URL` to the Neon **development** branch and verify t
 - The local status output is consistent with a database where these migrations are recorded and the schema is up to date. However, the effective URL used by Prisma should still be verified against the development branch; a shell hostname check alone does not prove which URL every Prisma subprocess loads.
 - Do not run either baseline command again: a ledger exists on development now. Do not delete or manually edit migration history. No database writes or migrations were performed by this verification.
 - Next: confirm the local effective database host without revealing credentials, then run `npm run typecheck` (non-migrating). Only run `npm run build` after confirming its `prisma migrate deploy` target is development and the migration status is correct. Production remains a separate, protected target; no deployment was initiated.
+
+
+## Follow-up: local typecheck passed — 2026-10-09
+
+- The user ran `npm run typecheck`; Prisma Client v6.19.3 generated successfully and `tsc --noEmit` emitted no errors. Treat this as a successful local typecheck.
+- The connected Neon read-only check immediately before this confirmed the development branch currently has a migration ledger with all six repository migrations marked finished and not rolled back.
+- Do not run baseline commands again. Before running `npm run build`, verify the effective database URL used by Prisma is the development branch, because this script includes `prisma migrate deploy`. No build or deployment is claimed from this milestone.
+- Next validation: verify the effective Prisma URL hostname safely, then run the build only after confirming it targets development and migration status remains up to date. Production must remain untouched.
