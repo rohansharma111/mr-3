@@ -154,8 +154,7 @@ export async function POST(request: NextRequest) {
         plannedFor,
         priority: parsed.data.priority,
         objective: parsed.data.objective,
-        notes: parsed.data.notes,
-        isDemo: false
+        notes: parsed.data.notes
       }
     });
 
