@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.plan.groupBy({
       by: ["status"],
-      where: { userId: user.id, doctor: { isDemo: false }, plannedFor: { gte: start, lt: rangeEnd } },
+      where: { userId: user.id, plannedFor: { gte: start, lt: rangeEnd } },
       _count: { _all: true }
     }),
     prisma.target.findFirst({
