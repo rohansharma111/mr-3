@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
   const issues = await prisma.sampleIssue.findMany({
     where: {
       userId: user.id,
+      isDemo: false,
       ...(doctorId ? { doctorId } : {}),
       ...(status && statuses.includes(status as typeof statuses[number]) ? { status } : {})
     },
