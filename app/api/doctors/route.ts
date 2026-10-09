@@ -73,7 +73,13 @@ export async function GET(request: NextRequest) {
       ? { x: Number(doctor.mapX), y: Number(doctor.mapY) }
       : null
   })));
-  } catch {
+  } catch (error) {
+    console.error("[API doctors] Failed to load doctors for selected location", {
+      state,
+      region,
+      patch,
+      error
+    });
     return NextResponse.json({ error: "Unable to load doctors" }, { status: 500 });
   }
 }
