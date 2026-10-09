@@ -245,6 +245,7 @@ export default function Home() {
   const [locationSaving, setLocationSaving] = useState(false);
   const [locationSaveMessage, setLocationSaveMessage] = useState("");
   const selectedDoctor = selected ?? doctors[0] ?? null;
+  const aiSupportEnabled = process.env.NEXT_PUBLIC_AI_SUPPORT_ENABLED === "true";
 
   const sectionMeta: Record<string, { title: string; description: string }> = {
     explorer: { title: "Doctor Explorer", description: "Discover and prioritize doctors using persisted field intelligence." },
@@ -717,6 +718,8 @@ export default function Home() {
   }, [section, callFilter]);
 
   const askAi = async (question?: string) => {
+    if (!aiSupportEnabled) return;
+
     const text = (question ?? aiInput).trim();
     if (!text || aiLoading) return;
 
@@ -1359,120 +1362,173 @@ export default function Home() {
                   <h2 className="text-2xl font-black text-slate-900">AI Support</h2>
                   <p className="text-sm text-slate-500">Ask about doctors, products, stockists, activity, and field planning.</p>
                 </div>
-                <span className="text-xs bg-blue-50 text-blue-700 font-semibold px-3 py-1.5 rounded-xl border border-blue-100">
-                  Data-grounded
+                <span className={"text-xs font-semibold px-3 py-1.5 rounded-xl border " + (aiSupportEnabled ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-amber-50 text-amber-700 border-amber-200")}>
+                  {aiSupportEnabled ? "Data-grounded" : "Coming Soon"}
                 </span>
               </div>
 
-              <div className="grid xl:grid-cols-12 gap-6">
-                <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 border-b border-slate-100">
-                    <div className="font-bold">MR 3.0 Assistant</div>
-                    <div className="text-xs text-slate-500 mt-1">Answers are restricted to authenticated MR 3.0 operational data.</div>
-                  </div>
-
-                  <div className="p-4 sm:p-5 space-y-3 max-h-[520px] overflow-y-auto">
-                    {aiMessages.map((message, index) => (
-                      <div key={index} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
-                        <div className={
-                          message.role === "user"
-                            ? "max-w-[88%] rounded-2xl rounded-br-md bg-blue-600 text-white px-4 py-3 text-sm leading-6"
-                            : "max-w-[88%] rounded-2xl rounded-bl-md bg-slate-100 text-slate-800 px-4 py-3 text-sm leading-6"
-                        }>
-                          {message.content}
+              {!aiSupportEnabled ? (
+                <div className="grid xl:grid-cols-12 gap-6">
+                  <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="min-h-[520px] flex items-center justify-center p-6 sm:p-10">
+                      <div className="max-w-xl w-full text-center">
+                        <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 text-blue-700 flex items-center justify-center text-2xl font-black">✦</div>
+                        <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-bold text-amber-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          AI Support · Coming Soon
+                        </div>
+                        <h3 className="mt-4 text-xl sm:text-2xl font-black text-slate-900">AI assistance is being prepared</h3>
+                        <p className="mt-3 text-sm leading-6 text-slate-500">
+                          The MR 3.0 AI backend is already isolated behind a server-side feature flag. We’ll enable it when the model and operating costs are ready for this workspace.
+                        </p>
+                        <div className="mt-6 grid sm:grid-cols-3 gap-3 text-left">
+                          {[
+                            ["Doctor intelligence", "Grounded in persisted MR 3.0 data."],
+                            ["Field planning", "Designed around calls, plans and samples."],
+                            ["Safe by default", "No model credentials are exposed to the browser."]
+                          ].map(([title, description]) => (
+                            <div key={title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                              <div className="text-xs font-black text-slate-800">{title}</div>
+                              <div className="mt-1.5 text-[11px] leading-5 text-slate-500">{description}</div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
-                    {aiLoading && (
-                      <div className="flex justify-start">
-                        <div className="rounded-2xl rounded-bl-md bg-slate-100 text-slate-500 px-4 py-3 text-sm">
-                          Thinking…
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="px-4 sm:px-5 py-4 border-t border-slate-100">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {[
-                        "Which doctors should I prioritize?",
-                        "Show low-stock products.",
-                        "Summarize my recent activity.",
-                        "What should I prepare for my next visit?"
-                      ].map((prompt) => (
-                        <button
-                          key={prompt}
-                          type="button"
-                          disabled={aiLoading}
-                          onClick={() => askAi(prompt)}
-                          className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 hover:bg-blue-100 disabled:opacity-50 px-3 py-2 rounded-xl"
-                        >
-                          {prompt}
-                        </button>
-                      ))}
                     </div>
-                    <form
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        askAi();
-                      }}
-                      className="flex items-end gap-2"
-                    >
-                      <textarea
-                        value={aiInput}
-                        onChange={(event) => setAiInput(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" && !event.shiftKey) {
-                            event.preventDefault();
-                            askAi();
-                          }
+                  </div>
+
+                  <div className="xl:col-span-4 space-y-5">
+                    <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm">
+                      <h3 className="font-bold">What will be available</h3>
+                      <div className="mt-4 space-y-2 text-xs">
+                        {[
+                          "Authenticated doctor and territory data",
+                          "Products and molecule information",
+                          "Stockist inventory",
+                          "Calls, samples, and visit plans"
+                        ].map((item) => (
+                          <div key={item} className="bg-white/10 rounded-xl p-3.5">{item}</div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Until then</h4>
+                      <p className="mt-3 text-xs leading-5 text-slate-600">
+                        Use Doctor Explorer, Doctor Potential, My Plan, My Calls, Samples, Targets and Reports for the live workspace.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid xl:grid-cols-12 gap-6">
+                  <div className="xl:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100">
+                      <div className="font-bold">MR 3.0 Assistant</div>
+                      <div className="text-xs text-slate-500 mt-1">Answers are restricted to authenticated MR 3.0 operational data.</div>
+                    </div>
+
+                    <div className="p-4 sm:p-5 space-y-3 max-h-[520px] overflow-y-auto">
+                      {aiMessages.map((message, index) => (
+                        <div key={index} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
+                          <div className={
+                            message.role === "user"
+                              ? "max-w-[88%] rounded-2xl rounded-br-md bg-blue-600 text-white px-4 py-3 text-sm leading-6"
+                              : "max-w-[88%] rounded-2xl rounded-bl-md bg-slate-100 text-slate-800 px-4 py-3 text-sm leading-6"
+                          }>
+                            {message.content}
+                          </div>
+                        </div>
+                      ))}
+                      {aiLoading && (
+                        <div className="flex justify-start">
+                          <div className="rounded-2xl rounded-bl-md bg-slate-100 text-slate-500 px-4 py-3 text-sm">
+                            Thinking…
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="px-4 sm:px-5 py-4 border-t border-slate-100">
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {[
+                          "Which doctors should I prioritize?",
+                          "Show low-stock products.",
+                          "Summarize my recent activity.",
+                          "What should I prepare for my next visit?"
+                        ].map((prompt) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            disabled={aiLoading}
+                            onClick={() => askAi(prompt)}
+                            className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 hover:bg-blue-100 disabled:opacity-50 px-3 py-2 rounded-xl"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                      <form
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          askAi();
                         }}
-                        rows={2}
-                        maxLength={1200}
-                        disabled={aiLoading}
-                        placeholder="Ask a field question…"
-                        className="flex-1 resize-none border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-blue-400"
-                      />
-                      <button
-                        type="submit"
-                        disabled={aiLoading || !aiInput.trim()}
-                        className="shrink-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold px-4 py-3 rounded-xl"
+                        className="flex items-end gap-2"
                       >
-                        {aiLoading ? "…" : "Ask"}
-                      </button>
-                    </form>
-                    <div className="text-[10px] text-slate-400 mt-2">Enter to send · Shift+Enter for a new line · 1,200 character limit</div>
-                  </div>
-                </div>
-
-                <div className="xl:col-span-4 space-y-5">
-                  <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm">
-                    <h3 className="font-bold">What AI can use</h3>
-                    <div className="mt-4 space-y-2 text-xs">
-                      {[
-                        "Authenticated doctor and territory data",
-                        "Products and molecule information",
-                        "Stockist inventory",
-                        "Calls, samples, and visit plans"
-                      ].map((item) => (
-                        <div key={item} className="bg-white/10 rounded-xl p-3.5">{item}</div>
-                      ))}
+                        <textarea
+                          value={aiInput}
+                          onChange={(event) => setAiInput(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" && !event.shiftKey) {
+                              event.preventDefault();
+                              askAi();
+                            }
+                          }}
+                          rows={2}
+                          maxLength={1200}
+                          disabled={aiLoading}
+                          placeholder="Ask a field question…"
+                          className="flex-1 resize-none border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:border-blue-400"
+                        />
+                        <button
+                          type="submit"
+                          disabled={aiLoading || !aiInput.trim()}
+                          className="shrink-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold px-4 py-3 rounded-xl"
+                        >
+                          {aiLoading ? "…" : "Ask"}
+                        </button>
+                      </form>
+                      <div className="text-[10px] text-slate-400 mt-2">Enter to send · Shift+Enter for a new line · 1,200 character limit</div>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200 p-5">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Operational guardrails</h4>
-                    <div className="mt-3 space-y-2 text-xs text-slate-600">
-                      <div>• No invented operational facts.</div>
-                      <div>• AI responses are grounded in supplied MR 3.0 data.</div>
-                      <div>• Clinical diagnosis and prescribing are out of scope.</div>
-                      <div>• AI requests are rate-limited and audited server-side.</div>
+                  <div className="xl:col-span-4 space-y-5">
+                    <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm">
+                      <h3 className="font-bold">What AI can use</h3>
+                      <div className="mt-4 space-y-2 text-xs">
+                        {[
+                          "Authenticated doctor and territory data",
+                          "Products and molecule information",
+                          "Stockist inventory",
+                          "Calls, samples, and visit plans"
+                        ].map((item) => (
+                          <div key={item} className="bg-white/10 rounded-xl p-3.5">{item}</div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Operational guardrails</h4>
+                      <div className="mt-3 space-y-2 text-xs text-slate-600">
+                        <div>• No invented operational facts.</div>
+                        <div>• AI responses are grounded in supplied MR 3.0 data.</div>
+                        <div>• Clinical diagnosis and prescribing are out of scope.</div>
+                        <div>• AI requests are rate-limited and audited server-side.</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          )}
+              )}
+            </section>}
 
           {section === "stockist" && <StockistPanel />}
 
