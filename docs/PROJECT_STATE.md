@@ -346,3 +346,55 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - Notifications GET/PATCH, products GET, doctors GET, and stockists GET now sanitize unexpected database/runtime failures.
 - Plans PATCH now has the same controlled error boundary.
 - These changes do not alter authentication, validation, query scope, or response behavior on successful requests.
+
+
+## Development reconciliation and AI Support UI milestone — 2026-10-09
+
+- Reconciled the active `development` branch to the newer verified `main` implementation before continuing work. The previous development-only JSX/mobile navigation commit was already represented in the newer main tree, so the development ref was safely aligned to main rather than building on stale code.
+- Verified that the development Neon branch remains `br-wandering-pond-b4wjpdlk`; production remains `br-purple-art-b42e2kzf` and was not modified.
+- Detected that the committed `20261009010000_add_patch_location_hierarchy` migration existed in source but its effects were missing from the development database. Applied only its additive SQL to development: `patches.state`, `patches.region`, and `patches_state_region_idx`.
+- Verified all 7 development patches now resolve to `Maharashtra` / `Andheri Region`, and verified all 10 development doctors currently have persisted latitude/longitude values. No production database change was made.
+- Added `NEXT_PUBLIC_AI_SUPPORT_ENABLED=false` to `.env.example`.
+- Updated the AI Support frontend to show an explicit prototype-consistent `Coming Soon` state while the feature flag is disabled. The server-side AI integration remains intact and is not removed; enabling the public feature flag is a deliberate future configuration step.
+- Added a client-side guard so AI requests are not sent while the feature is disabled. No AI credentials or secrets were added.
+
+## Validation note — 2026-10-09
+
+- GitHub source inspection confirms the active development tree contains the newer location hierarchy, exact-location Google Maps workflow, call-history fixes, mobile UI work, and the AI Support feature-flag path.
+- GitHub Actions Quality Checks now pass ESLint, Prisma Client generation/typecheck, and a Next.js production compilation/build on the development PR head using an isolated placeholder database URL.
+- This CI result does not validate the repository's `npm run build` script end-to-end, because that script also invokes `prisma migrate deploy`. The development database migration baseline is still a separate prerequisite; the application has not been locally validated through that script.
+
+
+## CI validation and stockist effect fix — 2026-10-09
+
+- Opened validation PR #7 from `development` to `main` without merging or deploying, to run the repository's Quality Checks workflow against the current implementation.
+- Inspected the preceding `main` CI run and found the blocking ESLint error in `app/components/stockist-panel.tsx`: calling the data loader directly from an effect triggered `react-hooks/set-state-in-effect`.
+- Refactored the initial stockist load to use an effect-owned fetch chain with an active/cancellation guard. The explicit Refresh button continues to use the shared loader and retains loading/error handling.
+- This is a code-quality/lifecycle fix only; no stockist data, schema, or prototype visual behavior changed.
+- A new CI run for the corrected development head is still pending; do not mark lint/typecheck as passing until its result is inspected. The previous run's TypeScript step was skipped because lint failed first.
+- PR #7 remains open for validation only. Do not merge it or deploy production as part of this step.
+
+## CI typecheck follow-up — 2026-10-09
+
+- The latest PR #7 Quality Checks run passed ESLint (the prior stockist effect error is resolved) but exposed a TypeScript error in the My Calls follow-up metric: the call outcome field is nullable, while `RegExp.test` requires a string.
+- Updated the metric to test `c.outcome || ""`, preserving the existing count behavior while safely handling calls with no outcome value.
+- This is a null-safety fix only; no UI redesign, API behavior, database data, or schema was changed.
+- A fresh PR validation run should verify the fix. Do not merge PR #7 or deploy until the complete validation status is reviewed.
+
+## CI validation and isolated production-build check — 2026-10-09
+
+- The completed Quality Checks run for commit `164c4a60fb4c9cb0c11429888f1984ff0a21c07b` passed every step: dependency installation, ESLint, Prisma Client generation/typecheck, and `npx next build`.
+- Run: https://github.com/rohansharma111/mr-3/actions/runs/37897491449
+- The build ran with the CI-only placeholder `DATABASE_URL` and placeholder environment values. It did not connect to Neon or apply database migrations.
+- Confirmed the development Neon branch remains `br-wandering-pond-b4wjpdlk`; the development database still has no `public._prisma_migrations` ledger. This remains an explicit migration-baseline prerequisite and has not been changed.
+- CI deliberately does **not** run `npm run build`, because that project script also invokes `prisma migrate deploy`; the CI job must not apply migrations to any real database.
+- This validates the Next.js build in CI, but does not validate the local migration-baseline workflow or an end-to-end deploy against a migrated database.
+- Neon production was not changed. PR #7 remains open for validation only; do not merge or deploy as part of this step.
+
+## Local validation error follow-up — 2026-10-09
+
+- The local TypeScript error at the My Calls follow-up metric is the nullable `outcome` field being passed to `RegExp.test`. The active GitHub `development` version already uses `c.outcome || ""`; if the local checkout still reports the error, sync/check out the latest `development` commit or apply that null-safe fallback locally.
+- Fixed `scripts/baseline-existing-dev-db.ts` to run its asynchronous baseline workflow inside an explicit `main()` function. This removes top-level `await`, which fails under the current `tsx` CommonJS output in the user's Node 24 environment.
+- The baseline's safety gates remain unchanged: it requires the development environment marker and explicit confirmation, refuses if a migration ledger already exists, checks the database schema diff before marking migrations applied, and performs only migration-history bookkeeping after an exact schema match.
+- This fix has been committed on `development` as `a20036d2a6be7d3d51a3f8903352dda9d377f231`. The script has not been run against Neon from the connected environment. Do not run it until the local `DATABASE_URL` is verified to point to Neon development and the schema diff is empty.
+- Neon development was inspected and still has no `public._prisma_migrations` ledger. Production was not modified. PR #7 remains open; do not merge or deploy.

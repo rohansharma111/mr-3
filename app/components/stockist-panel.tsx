@@ -77,7 +77,34 @@ export function StockistPanel() {
   }
 
   useEffect(() => {
-    load();
+    let active = true;
+
+    fetch(
+      "/api/stockists?molecule=" + encodeURIComponent("Aceclofenac + Paracetamol"),
+      { cache: "no-store" }
+    )
+      .then(async response => {
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "Unable to load stockist data.");
+        }
+        return payload as StockistResponse;
+      })
+      .then(payload => {
+        if (active) setData(payload);
+      })
+      .catch(err => {
+        if (active) {
+          setError(err instanceof Error ? err.message : "Unable to load stockist data.");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
