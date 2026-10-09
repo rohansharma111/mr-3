@@ -145,7 +145,6 @@ export async function POST(request: NextRequest) {
             targetCalls: parsed.data.targetCalls,
             targetSamples: parsed.data.targetSamples,
             targetConversions: parsed.data.targetConversions,
-            isDemo: false
           }
         });
 
