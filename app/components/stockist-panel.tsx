@@ -56,9 +56,6 @@ export function StockistPanel() {
   );
 
   async function load() {
-    setLoading(true);
-    setError("");
-
     try {
       const response = await fetch(
         "/api/stockists?molecule=" + encodeURIComponent("Aceclofenac + Paracetamol"),
@@ -93,7 +90,11 @@ export function StockistPanel() {
           </p>
         </div>
         <button
-          onClick={load}
+          onClick={() => {
+            setLoading(true);
+            setError("");
+            void load();
+          }}
           disabled={loading}
           className="bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl disabled:opacity-50"
         >
