@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         status: parsed.data.status,
         outcome: parsed.data.outcome,
         notes: parsed.data.notes,
-        isDemo: true
+        isDemo: false
       },
       include: { product: { select: { name: true } } }
     });
