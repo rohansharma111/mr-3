@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     prisma.call.count({
       where: {
         userId: user.id,
+        isDemo: false,
         status: "COMPLETED",
         calledAt: { gte: start, lt: endExclusive(end) }
       }
@@ -62,6 +63,7 @@ export async function GET(request: NextRequest) {
     prisma.sampleIssue.aggregate({
       where: {
         userId: user.id,
+        isDemo: false,
         status: "ISSUED",
         issuedAt: { gte: start, lt: endExclusive(end) }
       },
