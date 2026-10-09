@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       _count: { _all: true }
     }),
     prisma.sampleIssue.aggregate({
-      where: { userId: user.id, issuedAt: { gte: start, lt: rangeEnd } },
+      where: { userId: user.id, isDemo: false, status: "ISSUED", issuedAt: { gte: start, lt: rangeEnd } },
       _count: { _all: true },
       _sum: { quantity: true }
     }),
