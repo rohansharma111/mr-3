@@ -64,7 +64,8 @@ export async function GET() {
         enabled: isAiSupportEnabled()
       }
     });
-  } catch {
+  } catch (error) {
+    console.error("[API metadata] Failed to load location and specialty metadata", error);
     return NextResponse.json({ error: "Unable to load metadata" }, { status: 500 });
   }
 }
