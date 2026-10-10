@@ -27,16 +27,16 @@ const doctorMapCoords: Record<string, readonly [number, number]> = {
 };
 
 const doctorData = [
-  ["Dr. Ankit Rawal","Cardiologist","HealthCare Clinic","Veera Desai Rd",92,"HIGH",0.6,"Veera Desai"],
-  ["Dr. Ramesh Gupta","Cardiologist","City Heart Hospital","Veera Desai Rd",88,"HIGH",1.2,"Veera Desai"],
-  ["Dr. Neha Verma","Cardiologist","Lotus Hospital","Azad Nagar",75,"MEDIUM",1.8,"Veera Desai"],
-  ["Dr. Amit Shah","Cardiologist","Life Line Hospital","Veera Desai Rd",73,"MEDIUM",2.1,"Veera Desai"],
-  ["Dr. Pooja Mehta","Cardiologist","Sunrise Hospital","Andheri (W)",70,"MEDIUM",2.4,"Veera Desai"],
-  ["Dr. Suresh Patil","Diabetologist","Care Clinic","Veera Desai Rd",84,"HIGH",0.9,"Veera Desai"],
-  ["Dr. Kirit Desai","Cardiologist","Parle Heart Care","MG Road",95,"HIGH",2.8,"Vile Parle"],
-  ["Dr. Sneha Kulkarni","Gynecologist","Motherhood Hub","Station Rd",81,"HIGH",3.1,"Vile Parle"],
-  ["Dr. Kabir Malik","Orthopedic","Joint & Spine Clinic","Yari Road",89,"HIGH",1.5,"Versova"],
-  ["Dr. Tanya Sen","General Physician","Versova Medical","Beach Rd",68,"MEDIUM",2.2,"Versova"]
+  ["Dr. Ankit Rawal","Cardiologist","HealthCare Clinic","Veera Desai Rd",92,"High",0.6,"Veera Desai"],
+  ["Dr. Ramesh Gupta","Cardiologist","City Heart Hospital","Veera Desai Rd",88,"High",1.2,"Veera Desai"],
+  ["Dr. Neha Verma","Cardiologist","Lotus Hospital","Azad Nagar",75,"Medium",1.8,"Veera Desai"],
+  ["Dr. Amit Shah","Cardiologist","Life Line Hospital","Veera Desai Rd",73,"Medium",2.1,"Veera Desai"],
+  ["Dr. Pooja Mehta","Cardiologist","Sunrise Hospital","Andheri (W)",70,"Medium",2.4,"Veera Desai"],
+  ["Dr. Suresh Patil","Diabetologist","Care Clinic","Veera Desai Rd",84,"High",0.9,"Veera Desai"],
+  ["Dr. Kirit Desai","Cardiologist","Parle Heart Care","MG Road",95,"High",2.8,"Vile Parle"],
+  ["Dr. Sneha Kulkarni","Gynecologist","Motherhood Hub","Station Rd",81,"High",3.1,"Vile Parle"],
+  ["Dr. Kabir Malik","Orthopedic","Joint & Spine Clinic","Yari Road",89,"High",1.5,"Versova"],
+  ["Dr. Tanya Sen","General Physician","Versova Medical","Beach Rd",68,"Medium",2.2,"Versova"]
 ] as const;
 
 async function main() {
@@ -98,26 +98,26 @@ async function main() {
   }
 
   const additionalDoctorData = [
-    ["Dr. Kavita Rao", "Cardiologist", "Western Heart & Wellness Clinic", "Bandra East", 87, "HIGH", 1.1, "Bandra East"],
-    ["Dr. Nikhil Bhat", "Diabetologist", "Bandra Diabetes Centre", "Khar West", 79, "MEDIUM", 1.6, "Khar West"],
-    ["Dr. Meera Iyer", "Gynecologist", "Santacruz Women's Clinic", "Santacruz East", 91, "HIGH", 0.8, "Santacruz"],
-    ["Dr. Arjun Deshmukh", "Orthopedic", "Goregaon Ortho Care", "Goregaon East", 83, "HIGH", 1.3, "Goregaon East"],
-    ["Dr. Farah Khan", "General Physician", "Malad Family Clinic", "Malad West", 64, "MEDIUM", 2.0, "Malad West"],
-    ["Dr. Vivek Nair", "Cardiologist", "Kandivali Cardiac Associates", "Kandivali West", 76, "MEDIUM", 1.7, "Kandivali"],
-    ["Dr. Shweta Joshi", "Diabetologist", "Borivali Endocrine Clinic", "Borivali West", 90, "HIGH", 0.9, "Borivali"],
-    ["Dr. Rahul Menon", "Orthopedic", "Powai Bone & Joint Centre", "Powai", 72, "MEDIUM", 2.4, "Powai"],
-    ["Dr. Isha Kapoor", "Gynecologist", "Vikhroli Women's Health", "Vikhroli West", 86, "HIGH", 1.2, "Vikhroli"],
-    ["Dr. Sameer Kulkarni", "General Physician", "Mulund Community Clinic", "Mulund West", 69, "MEDIUM", 1.8, "Mulund"],
-    ["Dr. Priya Nambiar", "Cardiologist", "Bandra Heart Clinic", "Bandra West", 94, "HIGH", 1.0, "Khar West"],
-    ["Dr. Aditya Shah", "Diabetologist", "Santacruz Metabolic Care", "Santacruz West", 74, "MEDIUM", 2.1, "Santacruz"],
-    ["Dr. Naina Fernandes", "General Physician", "Goregaon Health Point", "Goregaon West", 61, "LOW", 2.8, "Goregaon East"],
-    ["Dr. Omkar Patwardhan", "Orthopedic", "Malad Mobility Clinic", "Malad East", 82, "HIGH", 1.4, "Malad West"],
-    ["Dr. Ritu Sethi", "Gynecologist", "Borivali Women's Centre", "Borivali East", 78, "MEDIUM", 1.9, "Borivali"],
-    ["Dr. Kunal Shetty", "Cardiologist", "Powai Cardiac Clinic", "Powai", 89, "HIGH", 1.1, "Powai"],
-    ["Dr. Ayesha Merchant", "Diabetologist", "Mulund Diabetes & Wellness", "Mulund East", 80, "HIGH", 1.5, "Mulund"],
-    ["Dr. Pranav Kulkarni", "General Physician", "Vikhroli Family Practice", "Vikhroli East", 58, "LOW", 2.6, "Vikhroli"],
-    ["Dr. Simran Gill", "Orthopedic", "Bandra Sports Injury Clinic", "Bandra East", 85, "HIGH", 1.3, "Bandra East"],
-    ["Dr. Devika Menon", "Gynecologist", "Kandivali Women's Wellness", "Kandivali East", 71, "MEDIUM", 2.2, "Kandivali"]
+    ["Dr. Kavita Rao", "Cardiologist", "Western Heart & Wellness Clinic", "Bandra East", 87, "High", 1.1, "Bandra East"],
+    ["Dr. Nikhil Bhat", "Diabetologist", "Bandra Diabetes Centre", "Khar West", 79, "Medium", 1.6, "Khar West"],
+    ["Dr. Meera Iyer", "Gynecologist", "Santacruz Women's Clinic", "Santacruz East", 91, "High", 0.8, "Santacruz"],
+    ["Dr. Arjun Deshmukh", "Orthopedic", "Goregaon Ortho Care", "Goregaon East", 83, "High", 1.3, "Goregaon East"],
+    ["Dr. Farah Khan", "General Physician", "Malad Family Clinic", "Malad West", 64, "Medium", 2.0, "Malad West"],
+    ["Dr. Vivek Nair", "Cardiologist", "Kandivali Cardiac Associates", "Kandivali West", 76, "Medium", 1.7, "Kandivali"],
+    ["Dr. Shweta Joshi", "Diabetologist", "Borivali Endocrine Clinic", "Borivali West", 90, "High", 0.9, "Borivali"],
+    ["Dr. Rahul Menon", "Orthopedic", "Powai Bone & Joint Centre", "Powai", 72, "Medium", 2.4, "Powai"],
+    ["Dr. Isha Kapoor", "Gynecologist", "Vikhroli Women's Health", "Vikhroli West", 86, "High", 1.2, "Vikhroli"],
+    ["Dr. Sameer Kulkarni", "General Physician", "Mulund Community Clinic", "Mulund West", 69, "Medium", 1.8, "Mulund"],
+    ["Dr. Priya Nambiar", "Cardiologist", "Bandra Heart Clinic", "Bandra West", 94, "High", 1.0, "Khar West"],
+    ["Dr. Aditya Shah", "Diabetologist", "Santacruz Metabolic Care", "Santacruz West", 74, "Medium", 2.1, "Santacruz"],
+    ["Dr. Naina Fernandes", "General Physician", "Goregaon Health Point", "Goregaon West", 61, "Low", 2.8, "Goregaon East"],
+    ["Dr. Omkar Patwardhan", "Orthopedic", "Malad Mobility Clinic", "Malad East", 82, "High", 1.4, "Malad West"],
+    ["Dr. Ritu Sethi", "Gynecologist", "Borivali Women's Centre", "Borivali East", 78, "Medium", 1.9, "Borivali"],
+    ["Dr. Kunal Shetty", "Cardiologist", "Powai Cardiac Clinic", "Powai", 89, "High", 1.1, "Powai"],
+    ["Dr. Ayesha Merchant", "Diabetologist", "Mulund Diabetes & Wellness", "Mulund East", 80, "High", 1.5, "Mulund"],
+    ["Dr. Pranav Kulkarni", "General Physician", "Vikhroli Family Practice", "Vikhroli East", 58, "Low", 2.6, "Vikhroli"],
+    ["Dr. Simran Gill", "Orthopedic", "Bandra Sports Injury Clinic", "Bandra East", 85, "High", 1.3, "Bandra East"],
+    ["Dr. Devika Menon", "Gynecologist", "Kandivali Women's Wellness", "Kandivali East", 71, "Medium", 2.2, "Kandivali"]
   ] as const;
 
   const allDemoDoctors: { id: string; name: string; specialtyName: string; patchName: string }[] = [];
@@ -182,7 +182,7 @@ async function main() {
   for (let s = 0; s < stockistRecords.length; s++) {
     for (let p = 0; p < products.length; p++) {
       const quantity = [0, 12, 24, 36, 60, 84, 120][(s * 3 + p * 2) % 7];
-      const status = quantity === 0 ? "OUT_OF_STOCK" : quantity <= 12 ? "LOW" : "GOOD";
+      const status = quantity === 0 ? "OUT_OF_STOCK" : quantity <= 12 ? "Low" : "GOOD";
       await prisma.stockistInventory.upsert({
         where: { stockistId_productId: { stockistId: stockistRecords[s].id, productId: products[p].id } },
         update: { quantity, unit: "packs", status },
@@ -241,7 +241,7 @@ async function main() {
     const doctor = existingDemoDoctors[(i * 5) % existingDemoDoctors.length];
     const plannedFor = new Date(dayStart.getTime() + ((i % 12) - 5) * 24 * 60 * 60 * 1000 + (9 + (i % 7)) * 60 * 60 * 1000);
     const status = i % 10 === 0 ? "MISSED" : i % 8 === 0 ? "COMPLETED" : "PLANNED";
-    const priority = i % 12 === 0 ? "URGENT" : i % 5 === 0 ? "HIGH" : i % 3 === 0 ? "LOW" : "NORMAL";
+    const priority = i % 12 === 0 ? "URGENT" : i % 5 === 0 ? "High" : i % 3 === 0 ? "Low" : "NORMAL";
     const objectives = ["Introduce new product information", "Review product availability and feedback", "Discuss follow-up questions", "Share approved clinical literature", "Check sample feedback"];
     const exists = await prisma.plan.findFirst({ where: { userId: demoUser.id, doctorId: doctor.id, plannedFor } });
     if (!exists) {
