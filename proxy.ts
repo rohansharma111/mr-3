@@ -15,7 +15,7 @@ function isSameOriginMutation(request: Request) {
 export default auth((request) => {
   const requestId = getRequestId(request);
   const isApiRequest = request.nextUrl.pathname.startsWith("/api/");
-  const isAuthenticated = Boolean(request.auth);
+  const isAuthenticated = Boolean(request.auth?.user?.id);
   const isLoginPage = request.nextUrl.pathname === "/login";
 
   if (isApiRequest) {
