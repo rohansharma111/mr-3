@@ -55,7 +55,7 @@ model Doctor {
   clinic       String
   location     String
   score        Int           @default(0)
-  potential    String        @default("MEDIUM")
+  potential    String        @default("Medium")
   distanceKm   Decimal?      @map("distance_km") @db.Decimal
   latitude     Decimal?      @db.Decimal
   longitude    Decimal?      @db.Decimal
