@@ -1,0 +1,2 @@
+ALTER TABLE "app_users"
+ADD COLUMN IF NOT EXISTS "session_version" INTEGER NOT NULL DEFAULT 0;
