@@ -25,3 +25,7 @@ For a larger public deployment, a layered control can be added using a trusted e
 Authentication remains fail-closed when the login limiter cannot be consulted. Successful login is not rejected merely because cleanup of an expired login bucket fails.
 
 No schema change was required because the existing `rate_limit_buckets` table is reused.
+
+## Per-user session revocation
+
+Auth.js uses JWT sessions with an eight-hour maximum age. Password changes alone do not invalidate already-issued JWTs. The `app_users.session_version` column is included in newly issued tokens and checked against the database during JWT refresh. Incrementing a user's stored version revokes their older tokens without affecting other accounts. Tokens issued before this feature treat a missing version as zero, preserving unaffected users' sessions.
