@@ -3,34 +3,33 @@
 ## Verified repository state
 
 - Repository: `rohansharma111/mr-3`.
-- Active working branch for this continuation: `main`, following the project instruction to continue development on main.
-- `main` and `development` are diverged. At inspection, main was 12 commits ahead and 6 behind development; do not merge, reset, or force-update either branch without reviewing the exact commit graph and file diffs.
-- GitHub Actions must not be triggered as part of this work. The workflow is configured for manual-only execution.
-- No deployment was initiated.
+- Active continuation branch: `main`, following the instruction to continue development on main.
+- Latest comparison: `main` is 14 commits ahead of `development`, and `development` is 6 commits ahead of `main`. The merge base is `2c4528bcbde3755e77301b4d215e02592d4a8ae6`.
+- The unique commits are not limited to one file: the development-only comparison currently reports `docs/PROJECT_STATE.md`; main-only changes include auth/session-version work, seed data, workflow configuration, Prisma schema/migration and reconciliation documentation. Do not merge, reset, or force-update either branch until the full commit graph and file-level conflicts are reviewed.
+- GitHub Actions must not be triggered. No deployment was initiated.
 
-## Database state verified read-only
+## Database migration state
 
 Neon project: `raspy-sea-44517117`.
 
-Both Neon branches have a `public._prisma_migrations` ledger with six finished migrations and no rolled-back or incomplete entries. The ledger currently ends at `20261009010000_add_patch_location_hierarchy` on both branches.
-
-- Production branch `br-purple-art-b42e2kzf`: `app_users.session_version` exists.
-- Development branch `br-wandering-pond-b4wjpdlk`: `app_users.session_version` does not exist.
-- This is a real schema/code mismatch for the current main authentication implementation. Do not run `prisma migrate deploy` until the development schema and migration history are reconciled safely.
-- Do not manually insert rows into `_prisma_migrations`. Use Prisma's supported migration resolution workflow after validating the exact schema diff.
-- Production schema/migration history must be reconciled separately; do not assume the development baseline procedure is safe for production.
+- Development branch: `br-wandering-pond-b4wjpdlk`.
+- Production branch: `br-purple-art-b42e2kzf`.
+- At the prior direct inspection, both branches showed six finished migration records ending at `20261009010000_add_patch_location_hierarchy`. The session-version migration is not recorded in either ledger.
+- Production has `public.app_users.session_version`; development does not.
+- A fresh schema comparison between development and production shows broader drift than that one column: it includes `session_version`, column ordering and timestamp precision/default differences, doctor `potential` defaults/check values and numeric precision/coordinates, among other differences. Therefore these databases cannot be treated as schema-identical, and the session-version column is not the only reconciliation item.
+- Do not run `prisma migrate deploy`, baseline either database, manually edit `_prisma_migrations`, or attempt a bulk schema sync until the full intended schema and migration history are reconciled against the actual migration files.
 
 ## Session revocation
 
-- The production user's `session_version` was changed from 0 to 1 for `amit.rawat@mr3.demo`, using a conditional update. The database confirmed the resulting version is 1.
-- This prepares the current main authentication code to reject JWTs issued with the prior version. It does not itself deploy code or prove that the currently running production application is already enforcing session versions.
-- The migration SQL was updated to use a zero-version guard and set the version to 1, making its account update repeatable if migration bookkeeping requires reconciliation.
-- No production deployment was performed.
+- Production's `amit.rawat@mr3.demo` record was conditionally updated from session version 0 to 1; the database confirmed the resulting value is 1.
+- This only causes old JWTs to be rejected if the deployed application code is already checking session versions. The production deployment/code version was not verified, and no deployment was performed.
+- Migration `prisma/migrations/20261026100000_add_user_session_version/migration.sql` now uses `ADD COLUMN IF NOT EXISTS` and a `session_version = 0` guard to make the column addition and targeted version update repeatable. This does not reconcile the migration ledger by itself.
 
-## Next safe steps
+## Safe next steps
 
-1. Inspect the full main/development commit graph and reconcile development without losing either branch's unique work.
-2. Compare the complete Prisma schema to the development database and resolve the missing `session_version` column through the repository's supported migration workflow.
-3. Confirm whether the production schema change was previously applied outside Prisma and document a safe production migration-history reconciliation plan.
-4. Run lint, typecheck, build and targeted authentication tests in an environment with the repository dependencies available. Do not claim these checks passed until results are observed.
-5. Keep automated Git deployments disabled and do not trigger GitHub Actions unless explicitly requested.
+1. Review the exact unique commits and conflicting source changes on both branches before integrating either direction.
+2. Inspect every migration directory and compare the intended Prisma schema to each Neon branch; classify differences as intentional schema changes versus type/default drift.
+3. Prepare a development-only migration plan and verify it on a temporary Neon branch before any persistent schema change.
+4. Design production migration-history reconciliation separately. Do not baseline production using the development procedure.
+5. Run lint, typecheck, build and targeted authentication tests in an environment with dependencies available. Do not claim checks passed unless observed.
+6. Keep GitHub Actions and deployments untouched unless explicitly requested.
