@@ -9,3 +9,7 @@ SET "session_version" = 1,
     "updated_at" = NOW()
 WHERE "email" = 'amit.rawat@mr3.demo'
   AND "session_version" = 0;
+
+-- Keep new doctor records compatible with the persisted High/Medium/Low constraint.
+ALTER TABLE "doctors"
+ALTER COLUMN "potential" SET DEFAULT 'Medium';
