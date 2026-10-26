@@ -491,3 +491,15 @@ Correct the local `DATABASE_URL` to the Neon **development** branch and verify t
 - Verified the corrected default on a temporary Neon branch cloned from production: `information_schema.columns.column_default = 'Medium'::text`.
 - The migration preparation tool selected production as the parent branch, so this temporary branch is not suitable for applying the migration to development. No persistent database was changed and no deployment/workflow was triggered.
 - Current branch comparison after the latest main commits: `main` is 18 commits ahead of `development`, while `development` has 6 commits not in `main`. Keep both refs intact until intentional integration is reviewed.
+
+
+## Continuation findings — 2026-10-26
+
+- Corrected the dashboard's high-potential query from `HIGH` to the persisted value `High`.
+- The doctor API's potential label mapping still checks uppercase values, while persisted values and the database constraint use title case. This needs correction before the validation stage; a direct repository update was blocked and was not bypassed.
+- The auth helper role vocabulary (`FIELD_MANAGER`, `AREA_MANAGER`, `ADMIN`) does not match the actual database role constraint (`ADMIN`, `MANAGER`, `FIELD_MANAGER`, `ANALYST`). Current database user counts are one `FIELD_MANAGER` on each branch, but role semantics need a coherent policy before production use.
+- Prisma's Doctor potential default is `Medium`; development database uses `Medium`, but production's default is `MEDIUM`, which conflicts with its `High`/`Medium`/`Low` check. The required default correction has been verified on a temporary branch, but it is not yet represented by a migration or applied to a persistent database.
+- Development still lacks `app_users.session_version`; production has it, and the session-version migration is not recorded in either persistent migration ledger. Do not run the full build script against either persistent database because `npm run build` includes `prisma migrate deploy`.
+- The temporary migration branch cloned from production was discarded after user approval without applying changes.
+- Latest branch comparison: `main` is 18 commits ahead of `development`; the six development-only commits affect the project-state documentation. Do not merge or reset either branch wholesale.
+- The current work is **not yet at the consolidated test/validation handoff**. The outstanding role and migration corrections must be resolved before that stage. No GitHub Actions workflow or deployment was triggered.
