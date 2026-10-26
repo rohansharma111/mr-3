@@ -153,6 +153,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.sub = user.id;
         token.role = user.role;
       }
+
+      if (!token.sub) return null;
+
+      // Re-read the authoritative version on every JWT session refresh.
+      // Incrementing a user's version revokes their previously issued JWTs.
+      const currentUser = await prisma.user.findUnique({
+        where: { id: token.sub },
+        select: { isActive: true, sessionVersion: true }
+      });
+
+      if (!currentUser || !currentUser.isActive) return null;
+
+      if (user) {
+        token.sessionVersion = currentUser.sessionVersion;
+      } else {
+        const issuedVersion =
+          typeof token.sessionVersion === "number" ? token.sessionVersion : 0;
+        if (issuedVersion !== currentUser.sessionVersion) return null;
+      }
+
       return token;
     },
     async session({ session, token }) {
