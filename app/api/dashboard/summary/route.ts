@@ -12,7 +12,7 @@ export async function GET() {
     const [doctorCount, highPotential, callCount, sampleUnits, specialties, sampleProducts] =
     await Promise.all([
       prisma.doctor.count({ where: { isActive: true, isDemo: false } }),
-      prisma.doctor.count({ where: { isActive: true, isDemo: false, potential: "HIGH" } }),
+      prisma.doctor.count({ where: { isActive: true, isDemo: false, potential: "High" } }),
       prisma.call.count({ where: { userId: user.id, isDemo: false } }),
       prisma.sampleIssue.aggregate({
         where: { userId: user.id, isDemo: false, status: "ISSUED" },
