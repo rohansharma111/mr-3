@@ -398,3 +398,13 @@ Continue MR 3.0 from the repository and Neon state documented in docs/PROJECT_ST
 - The baseline's safety gates remain unchanged: it requires the development environment marker and explicit confirmation, refuses if a migration ledger already exists, checks the database schema diff before marking migrations applied, and performs only migration-history bookkeeping after an exact schema match.
 - This fix has been committed on `development` as `a20036d2a6be7d3d51a3f8903352dda9d377f231`. The script has not been run against Neon from the connected environment. Do not run it until the local `DATABASE_URL` is verified to point to Neon development and the schema diff is empty.
 - Neon development was inspected and still has no `public._prisma_migrations` ledger. Production was not modified. PR #7 remains open; do not merge or deploy.
+
+
+## Repository / migration reconciliation follow-up — 2026-10-26
+
+- Current GitHub compare reports `main` 14 commits ahead of `development`, with `development` 6 commits ahead of `main`; merge base is `2c4528bcbde3755e77301b4d215e02592d4a8ae6`. The compare's net file difference includes `docs/PROJECT_STATE.md` on development and auth/session-version, migration, seed, workflow and other changes on main. Do not assume the branches are aligned.
+- A fresh Neon schema comparison found broader drift between development and production than just the session-version column: doctor potential constraints/defaults and numeric precision, timestamp precision/defaults, and other schema differences also appear.
+- The latest repository reconciliation report is `docs/repository-reconciliation-2026-10-26.md`. It supersedes any earlier branch-count estimates and records the current findings.
+- Production's `amit.rawat@mr3.demo` session version is 1 following the earlier conditional update. This only revokes old JWTs if the production app code is already checking session versions; deployment status was not verified.
+- No migration was applied to development or production during this follow-up. No migration ledger rows were manually inserted. No GitHub Actions workflow was triggered and no deployment was initiated.
+- Next: reconcile branch changes and the actual migration history first; prepare and validate a development-only schema plan before applying persistent changes. Production bookkeeping must be handled separately. Full lint/typecheck/build/auth validation has not been run during this follow-up.
