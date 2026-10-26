@@ -482,3 +482,12 @@ Correct the local `DATABASE_URL` to the Neon **development** branch and verify t
 - Production's `amit.rawat@mr3.demo` session version is 1 following the earlier conditional update. This only revokes old JWTs if the production app code is already checking session versions; deployment status was not verified.
 - No migration was applied to development or production during this follow-up. No migration ledger rows were manually inserted. No GitHub Actions workflow was triggered and no deployment was initiated.
 - Next: reconcile branch changes and the actual migration history first; prepare and validate a development-only schema plan before applying persistent changes. Production bookkeeping must be handled separately. Full lint/typecheck/build/auth validation has not been run during this follow-up.
+
+
+## Follow-up validation — doctor potential default — 2026-10-26
+
+- Updated the Prisma model default for `Doctor.potential` from `MEDIUM` to `Medium`. The live database check constraint permits only `High`, `Medium`, and `Low`; a default of `MEDIUM` could make creates fail when potential is omitted.
+- Added `ALTER TABLE "doctors" ALTER COLUMN "potential" SET DEFAULT 'Medium'` to the still-pending session-version migration. It changes only the default, not existing rows.
+- Verified the corrected default on a temporary Neon branch cloned from production: `information_schema.columns.column_default = 'Medium'::text`.
+- The migration preparation tool selected production as the parent branch, so this temporary branch is not suitable for applying the migration to development. No persistent database was changed and no deployment/workflow was triggered.
+- Current branch comparison after the latest main commits: `main` is 18 commits ahead of `development`, while `development` has 6 commits not in `main`. Keep both refs intact until intentional integration is reviewed.
