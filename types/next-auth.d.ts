@@ -10,6 +10,7 @@ declare module "next-auth" {
 
   interface User {
     role?: string;
+    sessionVersion?: number;
   }
 }
 
